@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	
+	<meta title="TowersAndMercs" package="cc.vogelaar.towersandmercs" version="0.0.1" company="DapperDodo" />
+	<app main="Main" path="Export" file="TowersAndMercs" />
+	
+	<source path="Source" />
+	
+	<haxelib name="openfl" />
+	
+	<assets path="Assets" rename="assets" exclude="openfl.svg" />
+	<icon path="Assets/openfl.svg" />
+	
+</project>
