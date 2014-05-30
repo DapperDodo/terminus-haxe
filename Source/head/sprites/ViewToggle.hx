@@ -1,4 +1,4 @@
-package head;
+package head.sprites;
 
 import openfl.display.SimpleButton;
 import openfl.display.Bitmap;
@@ -7,7 +7,7 @@ import openfl.display.BitmapData;
 import openfl.events.MouseEvent;
 
 import motion.Actuate;
-import motion.easing.Elastic;
+import motion.easing.Sine;
 
 class ViewToggle extends UpdateSprite
 {
@@ -75,7 +75,7 @@ class ViewToggle extends UpdateSprite
 		{
 			home = false;
 			mapBackground.showAway();
-			tweenTo(180, ((mapBackground.width - width) / 2) + 64, 600 - width + 64);
+			tweenTo(180, ((mapBackground.width - width) / 2) + width, 800 - width + width);
 		}
 		else
 		{	
@@ -90,7 +90,7 @@ class ViewToggle extends UpdateSprite
 		Actuate.tween 
 		(
 			this, 
-			1.5, 
+			0.75, 
 			{ 
 				rotation : toRotation,  
 				x : toX, 
@@ -102,7 +102,7 @@ class ViewToggle extends UpdateSprite
 			{
 				enable();
 			}
-		).ease (Elastic.easeInOut);
+		).ease (Sine.easeInOut);
 	}
 
 	private function enable()

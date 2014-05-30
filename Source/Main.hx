@@ -5,8 +5,6 @@ import openfl.Assets;
 import openfl.Lib;
 
 import openfl.display.Sprite;
-//import openfl.display.BitmapData;
-//import openfl.display.Bitmap;
 
 import openfl.events.Event;
 
@@ -14,10 +12,11 @@ import core.MapDefinitionLoader;
 import core.MapData;
 
 import head.BitmapFactory;
-import head.MapBackground;
-import head.UpdateSprite;
 import head.AssetLoader;
-import head.ViewToggle;
+
+import head.sprites.MapBackground;
+import head.sprites.UpdateSprite;
+import head.sprites.ViewToggle;
 
 class Main extends UpdateSprite 
 {	

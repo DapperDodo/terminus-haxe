@@ -1,10 +1,10 @@
-package head;
+package head.sprites;
 
 import openfl.display.BitmapData;
 import openfl.display.Bitmap;
 
 import motion.Actuate;
-import motion.easing.Quad;
+import motion.easing.Sine;
 
 import core.MapData;
 
@@ -27,7 +27,7 @@ class MapBackground extends UpdateSprite
 
 	override private function onPreLoad()
 	{
-        assetLoader.register("background", "assets/maps/" + mapData.getID() + "/bg.png");
+        assetLoader.register("background", "assets/maps/" + mapData.getID() + "/bg-1280x1600.jpg");
 	}
 
 	override private function onPostLoad()
@@ -53,11 +53,11 @@ class MapBackground extends UpdateSprite
 		Actuate.tween 
 		(
 			this, 
-			0.4, 
+			0.5, 
 			{ 
 				y : toY
 			}
-		).ease (Quad.easeInOut);
+		).ease (Sine.easeInOut);
 	}
 	/*
 	override private function onUpdate(deltaTime : Int)

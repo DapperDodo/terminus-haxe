@@ -2,6 +2,14 @@
 // TODO
 ///////////////////////////////////
 
+HIGH PRIO
 - the game should have a Pauze function
+- the game should run on an android device
+- the game should run on 1280x800 resolution
+- the game should rescale on devices with different resolutions
 
+MID PRIO
+- the game should run as html5 (on most browsers)
+- the game should run as a linux executable
 
+LOW PRIO

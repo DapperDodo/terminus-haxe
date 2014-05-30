@@ -1,4 +1,4 @@
-package head;
+package head.sprites;
 
 import openfl.display.Sprite;
 
