@@ -11,8 +11,8 @@ import openfl.events.Event;
 import core.MapDefinitionLoader;
 import core.MapData;
 
-import interfaces.IMapVisibility;
-import core.MapVisibility;
+import interfaces.IVision;
+import core.Vision;
 
 import head.BitmapFactory;
 import head.AssetLoader;
@@ -34,17 +34,17 @@ class Main extends UpdateSprite
 		// instanciate core classes
 		var mapDefinitionLoader : MapDefinitionLoader = new MapDefinitionLoader();
 		var mapData : MapData = new MapData(mapDefinitionLoader);
-        var mapVisibility : IMapVisibility = new MapVisibility(mapData);
+        var playerVision : IVisionServer = new Vision(mapData);
 
 		// load map data
 		mapData.load("hello_world");
-		mapVisibility.init();
+		playerVision.init();
 
 		// instanciate head classes
         var bitmapFactory : BitmapFactory = new BitmapFactory();
         var assetLoader : AssetLoader = new AssetLoader();
         var mapBackground : MapBackground = new MapBackground(mapData, bitmapFactory, assetLoader);
-        var fogOfWar : FogOfWar = new FogOfWar(mapData, mapVisibility, mapBackground, bitmapFactory, assetLoader);
+        var fogOfWar : FogOfWar = new FogOfWar(mapData, playerVision, mapBackground, bitmapFactory, assetLoader);
         var viewToggle : ViewToggle = new ViewToggle(bitmapFactory, assetLoader, mapBackground);
 
         // setup scene graph

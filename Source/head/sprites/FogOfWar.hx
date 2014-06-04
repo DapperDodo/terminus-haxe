@@ -3,37 +3,37 @@ package head.sprites;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
 
-import interfaces.IMapVisibility;
+import interfaces.IVision;
 
 import core.MapData;
 
-class FogOfWar extends UpdateSprite implements IMapVisibilityClient
+class FogOfWar extends UpdateSprite implements IVisionClient
 {
 	private var mapData : MapData;
-	private var mapVisibility : IMapVisibility;
+	private var playerVision : IVisionServer;
 	private var mapBackground : MapBackground;
 	private var bitmapFactory : BitmapFactory;
 	private var assetLoader : AssetLoader;
 
-	private var fogBitmaps : Map<IVisibility, Bitmap>;
+	private var fogBitmaps : Map<IVision, Bitmap>;
 
-	private var dirtyTiles : Array<IMapVisibilityTile>;
+	private var dirtyTiles : Array<IVisionTile>;
 
-	public function new(mapData : MapData, mapVisibility : IMapVisibility, mapBackground : MapBackground, bitmapFactory : BitmapFactory, assetLoader : AssetLoader)
+	public function new(mapData : MapData, playerVision : IVisionServer, mapBackground : MapBackground, bitmapFactory : BitmapFactory, assetLoader : AssetLoader)
 	{
 		super();
 
 		this.mapData = mapData;
-		this.mapVisibility = mapVisibility;
+		this.playerVision = playerVision;
 		this.mapBackground = mapBackground;
 		this.assetLoader = assetLoader;
 
-		fogBitmaps = new Map<IVisibility, Bitmap>();
-		fogBitmaps.set(IVisibility.None, bitmapFactory.getInstance());
-		fogBitmaps.set(IVisibility.Seen, bitmapFactory.getInstance());
-		fogBitmaps.set(IVisibility.Full, bitmapFactory.getInstance());
+		fogBitmaps = new Map<IVision, Bitmap>();
+		fogBitmaps.set(IVision.None, bitmapFactory.getInstance());
+		fogBitmaps.set(IVision.Seen, bitmapFactory.getInstance());
+		fogBitmaps.set(IVision.Full, bitmapFactory.getInstance());
 
-		dirtyTiles = new Array<IMapVisibilityTile>();
+		dirtyTiles = new Array<IVisionTile>();
 	}
 
 	override public function onPreLoad()
@@ -45,45 +45,54 @@ class FogOfWar extends UpdateSprite implements IMapVisibilityClient
 
 	override public function onPostLoad()
 	{
-		fogBitmaps.get(IVisibility.None).bitmapData = assetLoader.get("visibility-none");
-		fogBitmaps.get(IVisibility.Seen).bitmapData = assetLoader.get("visibility-seen");
-		fogBitmaps.get(IVisibility.Full).bitmapData = assetLoader.get("visibility-full");
+		fogBitmaps.get(IVision.None).bitmapData = assetLoader.get("visibility-none");
+		fogBitmaps.get(IVision.Seen).bitmapData = assetLoader.get("visibility-seen");
+		fogBitmaps.get(IVision.Full).bitmapData = assetLoader.get("visibility-full");
 	}
 
 	override public function onStart()
 	{
-		mapVisibility.register(this);
+		playerVision.register(this);
 	}
 
 	override public function onStop()
 	{
-		mapVisibility.unregister(this);
+		playerVision.unregister(this);
 	}
 
-	/* needed for IMapVisibilityClient interface */
-
-	public function onMapVisibilityChange(tile : IMapVisibilityTile) : Void
+	/* needed for IVisionClient interface */
+	public function onVisionChange(tile : IVisionTile) : Void
 	{
 		//trace("FogOfWar.onChange tx=" + tile.tx + ", ty=" + tile.ty + ", value=" + tile.value + ", rect=" + tile.rect + ", point=" + tile.point);
+		mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(tile.value).bitmapData, tile.rect, tile.point);
 
-		dirtyTiles.push(tile);
+		//dirtyTiles.push(tile);
 	}
 
+    private var testR : Float = 100;
+    private var testX : Float = 640;
+    private var testY : Float = 800;
+    private var testDX : Float = 25;
+    private var testDY : Float = -25;
 
-    private var testX : Float = 600;
-    private var testY : Float = 900;
-    private var testDX : Float = 50;
-    private var testDY : Float = -50;
+    private var oneshot : Bool = true;
 
 	override private function onUpdate(deltaTime : Int)
 	{
+		/*
 		if(dirtyTiles.length > 0)
 		{	
-			var tile : IMapVisibilityTile = dirtyTiles.shift();
+			var tile : IVisionTile = dirtyTiles.shift();
 			mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(tile.value).bitmapData, tile.rect, tile.point);
 		}
+		*/
 
-        mapVisibility.visit(testX, testY, 100);
+		if(oneshot)
+		{
+	        playerVision.visit(testX, testY, testR);
+	        playerVision.visit(testX-200, testY-200, testR-50);
+	        //oneshot = false;
+		}
 
 		testX += (testDX * (deltaTime / 1000));
 		if(testX >= 1280)
@@ -109,5 +118,4 @@ class FogOfWar extends UpdateSprite implements IMapVisibilityClient
 			testDY = -testDY;
 		}
 	}
-
 }

@@ -11,7 +11,7 @@ import openfl.geom.Point;
 	make the three visibility modes a type
 	for type-safety and readability
 */
-enum IVisibility
+enum IVision
 {
 	None;
 	Seen;
@@ -27,16 +27,16 @@ enum IVisibility
 
 	as message:
 
-	sent from the MapVisibility system to the registered clients
+	sent from the Vision system to the registered clients
 	whenever a visibility change occurred
 */
-typedef IMapVisibilityTile =
+typedef IVisionTile =
 {
-	var tx : Int; 				// tile x index
-	var ty : Int; 				// tile y index
-	var value : IVisibility; 	// visibility mode
-	var rect : Rectangle; 		// tile rectangle
-	var point : Point; 			// tile upper left corner coordinates
+	var tx : Int; 			// tile x index
+	var ty : Int; 			// tile y index
+	var value : IVision; 	// visibility mode
+	var rect  : Rectangle; 	// tile rectangle
+	var point : Point; 		// tile upper left corner coordinates
 	// add smooth shape info later
 }
 
@@ -46,11 +46,11 @@ typedef IMapVisibilityTile =
 	client
 
 	classes must implement this interface
-	when they want to register themselves to the MapVisibility system
+	when they want to register themselves to the Vision system
 */
-interface IMapVisibilityClient
+interface IVisionClient
 {
-	public function onMapVisibilityChange(tile : IMapVisibilityTile) : Void;
+	public function onVisionChange(tile : IVisionTile) : Void;
 }
 
 /*
@@ -60,10 +60,10 @@ interface IMapVisibilityClient
 
 	map visibility implementations must implement this interface
 */
-interface IMapVisibility
+interface IVisionServer
 {
 	public function init() : Void;
-	public function register(client : IMapVisibilityClient) : Void;
-	public function unregister(client : IMapVisibilityClient) : Void;
+	public function register(client : IVisionClient) : Void;
+	public function unregister(client : IVisionClient) : Void;
 	public function visit(x : Float, y : Float, radius : Float) : Void;
 }
