@@ -11,12 +11,16 @@ import openfl.events.Event;
 import core.MapDefinitionLoader;
 import core.MapData;
 
+import interfaces.IMapVisibility;
+import core.MapVisibility;
+
 import head.BitmapFactory;
 import head.AssetLoader;
 
 import head.sprites.MapBackground;
 import head.sprites.UpdateSprite;
 import head.sprites.ViewToggle;
+import head.sprites.FogOfWar;
 
 class Main extends UpdateSprite 
 {	
@@ -30,20 +34,23 @@ class Main extends UpdateSprite
 		// instanciate core classes
 		var mapDefinitionLoader : MapDefinitionLoader = new MapDefinitionLoader();
 		var mapData : MapData = new MapData(mapDefinitionLoader);
+        var mapVisibility : IMapVisibility = new MapVisibility(mapData);
+
+		// load map data
+		mapData.load("hello_world");
+		mapVisibility.init();
 
 		// instanciate head classes
         var bitmapFactory : BitmapFactory = new BitmapFactory();
         var assetLoader : AssetLoader = new AssetLoader();
         var mapBackground : MapBackground = new MapBackground(mapData, bitmapFactory, assetLoader);
+        var fogOfWar : FogOfWar = new FogOfWar(mapData, mapVisibility, mapBackground, bitmapFactory, assetLoader);
         var viewToggle : ViewToggle = new ViewToggle(bitmapFactory, assetLoader, mapBackground);
-
 
         // setup scene graph
 		addChild(mapBackground);
+			mapBackground.addChild(fogOfWar);
 		addChild(viewToggle);
-
-        // load map data
-		mapData.load("hello_world");
 
         // load assets
         this.preLoad();
@@ -57,8 +64,10 @@ class Main extends UpdateSprite
         	addEventListener (Event.ENTER_FRAME, frame);
 
 	        this.start();
+
         });
     }
+
 
 	private function frame (event:Event) : Void 
 	{

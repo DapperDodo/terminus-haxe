@@ -17,35 +17,27 @@ class MapBackground extends UpdateSprite
 	public function new(mapData : MapData, bitmapFactory : BitmapFactory, assetLoader : AssetLoader)
 	{
 		super();
-
 		this.mapData = mapData;
 		this.mapBitmap = bitmapFactory.getInstance();
 		this.assetLoader = assetLoader;
-
 		addChild(mapBitmap);
-	}
-
-	override private function onPreLoad()
-	{
-        assetLoader.register("background", "assets/maps/" + mapData.getID() + "/bg-1280x1600.jpg");
-	}
-
-	override private function onPostLoad()
-	{
-        mapBitmap.bitmapData = assetLoader.get("background");
-		showHome();
 	}
 
 	public function showHome()
 	{
 		// show only bottom (home) half of map
-		tweenTo(0 - (mapData.getHeight() / 2));
+		tweenTo(0 - (mapData.getHeight() / 2) + 250);
 	}
 
 	public function showAway()
 	{
 		// show only top (away) half of map
 		tweenTo(0);
+	}
+
+	public function bitmap() : Bitmap
+	{
+		return mapBitmap;
 	}
 
 	private function tweenTo(toY : Float)
@@ -59,6 +51,22 @@ class MapBackground extends UpdateSprite
 			}
 		).ease (Sine.easeInOut);
 	}
+
+	override private function onPreLoad()
+	{
+        assetLoader.register("background", "assets/maps/" + mapData.getID() + "/bg-1280x1600-invisible.jpg");
+	}
+
+	override private function onPostLoad()
+	{
+        mapBitmap.bitmapData = assetLoader.get("background");
+	}
+
+	override private function onStart()
+	{
+		showHome();
+	}
+
 	/*
 	override private function onUpdate(deltaTime : Int)
 	{

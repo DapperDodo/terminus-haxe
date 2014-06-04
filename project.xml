@@ -14,5 +14,5 @@
 	
 	<window width="1280" height="800" background="#FFFFFF" fps="30" />
 	<window fullscreen="false" resizable="false" />
-
+	
 </project>
