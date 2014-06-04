@@ -89,8 +89,8 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 
 		if(oneshot)
 		{
-	        playerVision.visit(testX, testY, testR);
-	        playerVision.visit(testX-200, testY-200, testR-50);
+	        playerVision.track("UUID-foo", testX, testY, testR);
+	        playerVision.track("UUID-bar", testX-200, testY-200, testR-50);
 	        //oneshot = false;
 		}
 

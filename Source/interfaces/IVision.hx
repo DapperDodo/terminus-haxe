@@ -65,5 +65,6 @@ interface IVisionServer
 	public function init() : Void;
 	public function register(client : IVisionClient) : Void;
 	public function unregister(client : IVisionClient) : Void;
-	public function visit(x : Float, y : Float, radius : Float) : Void;
+	public function track(id : String, x : Float, y : Float, radius : Float) : Void;
+	public function check(x : Float, y : Float) : IVision;
 }

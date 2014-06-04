@@ -11,6 +11,16 @@ import interfaces.IVision;
 */
 typedef Grid = Array<Array<IVisionTile>>;
 
+/*
+	structure for storing tracking data about vision-providing units
+*/
+typedef Unit = 
+{
+	id : String,
+	tx : Int, 
+	ty : Int,
+	radius : Float
+};
 
 /*
 	An instance of this class should be attached to each player in the game
@@ -18,7 +28,7 @@ typedef Grid = Array<Array<IVisionTile>>;
 class Vision implements IVisionServer
 {
 	// size of each Vision Tile in pixels
-	private var tilesize : Int = 16;
+	private var tilesize : Int = 32;
 
 	// map dimensions, map name etc. can be gotten from this
 	private var mapData : MapData;
@@ -38,12 +48,15 @@ class Vision implements IVisionServer
 	// cache of vision 'stamps', one for each radius used in the game
 	private var radiusGridCache : Map<String, Grid>;
 
+	// here's where we keep record of our tracked units
+	private var unitsTracked : Map<String, Unit>;
 
 	public function new(mapData : MapData)
 	{
 		this.mapData = mapData;
 		clientRegistry = new Array<IVisionClient>();
 		radiusGridCache = new Map<String, Grid>();
+		unitsTracked = new Map<String, Unit>();
 	}
 
 
@@ -57,8 +70,6 @@ class Vision implements IVisionServer
 	{
 		cols = Math.ceil(mapData.getWidth() / tilesize);
 		rows = Math.ceil((mapData.getHeight() / 2) / tilesize); // the division by 2 is because the fog of war only covers HALF of the map
-
-		//trace("Vision.init : cols, rows = (" + cols + ", " + rows + ")");
 
 		tiles = newGrid(rows, cols);
 	}
@@ -90,19 +101,56 @@ class Vision implements IVisionServer
 		the vision system will track their current field of vision (Full)
 		the vision system will also track the explored parts of the map (Seen)
 	*/
-	public function visit(x : Float, y : Float, radius : Float) : Void
+	public function track(id : String, x : Float, y : Float, radius : Float) : Void
 	{
 		var tx = Math.floor(x / tilesize);
 		var ty = Math.floor(y / tilesize);
-		//trace("Vision.visit : x=" + x + ", y=" + y + ", tx=" + tx + ", ty=" + ty);
+
+		if(unitsTracked.exists(id))
+		{
+			var unit : Unit = unitsTracked.get(id);
+			if(unit.tx == tx && unit.ty == ty)
+			{
+				return;
+			}
+			else
+			{
+				unit.tx = tx;
+				unit.ty = ty;
+				// TODO: set Full to Seen where unit has moved out of range
+			}
+		}
+		else
+		{
+			unitsTracked.set(id, {id : id, tx : tx, ty : ty, radius : radius});
+		}
 
 		var radiusGrid : Grid = getRadiusGrid(radius);
-
 		stamp(radiusGrid, tx, ty);
-
-		//setTile(tx, ty, IVision.Full);
 	}
 
+	/*
+		return the vision state of any position on the map
+	*/
+	public function check(x : Float, y : Float) : IVision
+	{
+		var tx = Math.floor(x / tilesize);
+		var ty = Math.floor(y / tilesize);
+		if(inBounds(tx, ty))
+		{
+			return tiles[tx][ty].value;
+		}
+		else if(y >= (mapData.getHeight() / 2))
+		{
+			// full vision on own side of the map
+			return IVision.Full;
+		}
+		else
+		{
+			// no vision on invalid places
+			return IVision.None;
+		}
+	}
 
 	/////////////////////////////////////////////////////////////
 	// private parts
@@ -116,8 +164,6 @@ class Vision implements IVisionServer
 	private function stamp(radiusGrid : Grid, tx : Int, ty : Int)
 	{
 		var tr : Int = Math.round((radiusGrid.length - 1) / 2);
-
-		//trace("Vision.stamp gridlength=" + radiusGrid.length + " tr=" + tr);
 
 		var rx : Int = 0;
 		for(x in tx-tr...tx+tr+1)
@@ -150,7 +196,6 @@ class Vision implements IVisionServer
 
 		if(!radiusGridCache.exists(radiusID))
 		{
-			//trace("new radius grid: " + radiusID);
 			radiusGridCache.set(radiusID, newRadiusGrid(radius));	
 		}
 
@@ -165,8 +210,6 @@ class Vision implements IVisionServer
 		var mid : Int = Math.ceil(radius / tilesize);
 		var size : Int = (mid * 2) + 1;
 
-		//trace("Vision.newRadiusGrid radius=" + radius + " mid=" + mid + " size=" + size);
-
 		var radiusgrid : Grid = newGrid(size, size);
 
 		for(x in 0...size)
@@ -175,13 +218,7 @@ class Vision implements IVisionServer
 			{
 				if(distance(x, y, mid, mid) <= radius)
 				{
-					//trace("Vision.newRadiusGrid within radius " + radius);
 					radiusgrid[x][y].value = IVision.Full;
-				}
-				else
-				{
-					//trace("Vision.newRadiusGrid NOT within radius " + radius);
-					//radiusgrid[x][y].value = IVision.Seen;
 				}
 			}
 		}
@@ -195,7 +232,6 @@ class Vision implements IVisionServer
 	private function distance(x1 : Int, y1 : Int, x2 : Int, y2 : Int) : Float
 	{
 		var d : Float = tilesize * Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-		//trace("Vision.distance ("+x1+","+y1+")-("+x2+","+y2+") = " + d);
 		return d;
 	}
 
@@ -234,11 +270,7 @@ class Vision implements IVisionServer
 	{
 		if(inBounds(tx, ty))
 		{
-			if(tiles[tx][ty].value == v)
-			{
-				// do nothing. Already seen.
-			}
-			else
+			if(tiles[tx][ty].value != v)
 			{
 				tiles[tx][ty].value = v;
 				broadcastChange(tx, ty);
