@@ -12,6 +12,7 @@ import core.MapDefinitionLoader;
 import core.MapData;
 
 import interfaces.IVision;
+import core.VisionRegistryCaster;
 import core.VisionStampFactory;
 import core.VisionGridFactory;
 import core.Vision;
@@ -36,23 +37,33 @@ class Main extends UpdateSprite
 		// configuration
 		var fogOfWarGranularity : Int = 12;
 
+		///////////////////////////////////////////////////
+		// CORE objects
+		///////////////////////////////////////////////////
 
-		// instanciate core classes
+		// subsystem Map
 		var mapDefinitionLoader : MapDefinitionLoader = new MapDefinitionLoader();
 		var mapData : MapData = new MapData(mapDefinitionLoader);
+		// subsystem Vision
+		var visionRegistry : IVisionRegistry = new VisionRegistryCaster();
+		var visionBroadcaster : IVisionBroadcaster = cast(visionRegistry, IVisionBroadcaster); //implements registry and broadcast interfaces
         var visionGridFactory : VisionGridFactory = new VisionGridFactory(fogOfWarGranularity);
         var visionStampFactory : VisionStampFactory = new VisionStampFactory(fogOfWarGranularity, visionGridFactory);
-        var playerVision : IVisionServer = new Vision(fogOfWarGranularity, mapData, visionStampFactory, visionGridFactory);
+        var visionServer : IVisionServer = new Vision(fogOfWarGranularity, mapData, visionStampFactory, visionGridFactory, visionBroadcaster);
+        var visionTracker : IVisionTracker = cast(visionServer, IVisionTracker); //implements server and tracker interfaces
 
 		// load map data
 		mapData.load("hello_world");
-		playerVision.init();
+		visionServer.init();
 
-		// instanciate head classes
+		///////////////////////////////////////////////////
+		// HEAD objects
+		///////////////////////////////////////////////////
+
         var bitmapFactory : BitmapFactory = new BitmapFactory();
         var assetLoader : AssetLoader = new AssetLoader();
         var mapBackground : MapBackground = new MapBackground(mapData, bitmapFactory, assetLoader);
-        var fogOfWar : FogOfWar = new FogOfWar(mapData, playerVision, mapBackground, bitmapFactory, assetLoader);
+        var fogOfWar : FogOfWar = new FogOfWar(mapData, mapBackground, bitmapFactory, assetLoader, visionRegistry, visionTracker);
         var viewToggle : ViewToggle = new ViewToggle(bitmapFactory, assetLoader, mapBackground);
 
         // setup scene graph

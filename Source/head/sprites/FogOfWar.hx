@@ -10,23 +10,25 @@ import core.MapData;
 class FogOfWar extends UpdateSprite implements IVisionClient
 {
 	private var mapData : MapData;
-	private var playerVision : IVisionServer;
 	private var mapBackground : MapBackground;
 	private var bitmapFactory : BitmapFactory;
 	private var assetLoader : AssetLoader;
+	private var visionRegistry : IVisionRegistry;
+	private var visionTracker : IVisionTracker;
 
 	private var fogBitmaps : Map<IVision, Bitmap>;
 
 	private var dirtyTiles : Array<IVisionTile>;
 
-	public function new(mapData : MapData, playerVision : IVisionServer, mapBackground : MapBackground, bitmapFactory : BitmapFactory, assetLoader : AssetLoader)
+	public function new(mapData : MapData, mapBackground : MapBackground, bitmapFactory : BitmapFactory, assetLoader : AssetLoader, visionRegistry : IVisionRegistry, visionTracker : IVisionTracker)
 	{
 		super();
 
 		this.mapData = mapData;
-		this.playerVision = playerVision;
 		this.mapBackground = mapBackground;
 		this.assetLoader = assetLoader;
+		this.visionRegistry = visionRegistry;
+		this.visionTracker = visionTracker;
 
 		fogBitmaps = new Map<IVision, Bitmap>();
 		fogBitmaps.set(IVision.None, bitmapFactory.getInstance());
@@ -52,12 +54,12 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 
 	override public function onStart()
 	{
-		playerVision.register(this);
+		visionRegistry.register(this);
 	}
 
 	override public function onStop()
 	{
-		playerVision.unregister(this);
+		visionRegistry.unregister(this);
 	}
 
 	/* needed for IVisionClient interface */
@@ -103,8 +105,8 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 
 		if(oneshot)
 		{
-	        playerVision.track("UUID-foo", testX, testY, testR);
-	        playerVision.track("UUID-bar", testX-200, testY-200, testR-50);
+	        visionTracker.track("UUID-foo", testX, testY, testR);
+	        visionTracker.track("UUID-bar", testX-200, testY-200, testR-50);
 
 	        /*
 	        for(i in 0...10)

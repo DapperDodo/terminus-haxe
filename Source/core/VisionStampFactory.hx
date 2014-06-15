@@ -36,6 +36,10 @@ class VisionStampFactory
 	}
 
 
+	/////////////////////////////////////////////////////////////
+	// private parts
+	/////////////////////////////////////////////////////////////
+
 	/*
 		make an id (hash) as a key for our cache map
 	*/
@@ -72,7 +76,7 @@ class VisionStampFactory
 					}
 					else
 					{
-						radiusGrid[x][y].seenShape = 3; //in
+						radiusGrid[x][y].seenShape = 2; //in
 					}
 				}
 				else
@@ -101,5 +105,4 @@ class VisionStampFactory
 		var d : Float = tilesize * Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 		return d;
 	}
-
 }

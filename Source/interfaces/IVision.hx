@@ -66,6 +66,18 @@ interface IVisionClient
 /*
 	interface
 
+	broadcaster
+
+	a channel through which vision changes can be transmitted to interested parties
+*/
+interface IVisionBroadcaster
+{
+	public function visionChange(tile : IVisionTile) : Void;
+}
+
+/*
+	interface
+
 	server
 
 	map visibility implementations must implement this interface
@@ -73,8 +85,30 @@ interface IVisionClient
 interface IVisionServer
 {
 	public function init() : Void;
+	public function check(x : Float, y : Float) : IVision;
+}
+
+/*
+	interface
+
+	tracker
+
+	units should be tracked through this interface
+*/
+interface IVisionTracker
+{
+	public function track(id : String, x : Float, y : Float, radius : Float) : Void;
+}
+
+/*
+	interface
+
+	registry
+
+	clients can register/unregister through this interface to receive vision change events
+*/
+interface IVisionRegistry
+{
 	public function register(client : IVisionClient) : Void;
 	public function unregister(client : IVisionClient) : Void;
-	public function track(id : String, x : Float, y : Float, radius : Float) : Void;
-	public function check(x : Float, y : Float) : IVision;
 }

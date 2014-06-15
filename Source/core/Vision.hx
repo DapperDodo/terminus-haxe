@@ -1,8 +1,5 @@
 package core;
 
-import openfl.geom.Rectangle;
-import openfl.geom.Point;
-
 import interfaces.IVision;
 
 /*
@@ -19,7 +16,7 @@ typedef Unit =
 /*
 	An instance of this class should be attached to each player in the game
 */
-class Vision implements IVisionServer
+class Vision implements IVisionServer implements IVisionTracker
 {
 	// size of each Vision Tile in pixels
 	private var tilesize : Int;
@@ -36,9 +33,6 @@ class Vision implements IVisionServer
 	// number of cols (width in tiles)
 	private var cols : Int;
 
-	// array of objects interested in vision changes
-	private var clientRegistry : Array<IVisionClient>;
-
 	// here's where we keep record of our tracked units
 	private var unitsTracked : Map<String, Unit>;
 
@@ -48,14 +42,17 @@ class Vision implements IVisionServer
 	// our source of grids
 	private var visionGridFactory : VisionGridFactory;
 
-	public function new(tilesize : Int, mapData : MapData, visionStampFactory : VisionStampFactory, visionGridFactory : VisionGridFactory)
+	// send vision channel changes out through a broadcaster
+	private var visionBroadcaster : IVisionBroadcaster;
+
+	public function new(tilesize : Int, mapData : MapData, visionStampFactory : VisionStampFactory, visionGridFactory : VisionGridFactory, visionBroadcaster : IVisionBroadcaster)
 	{
 		this.tilesize = tilesize;
 		this.mapData = mapData;
 		this.visionStampFactory = visionStampFactory;
 		this.visionGridFactory = visionGridFactory;
+		this.visionBroadcaster = visionBroadcaster;
 
-		clientRegistry = new Array<IVisionClient>();
 		unitsTracked = new Map<String, Unit>();
 	}
 
@@ -74,28 +71,6 @@ class Vision implements IVisionServer
 		rows = Math.ceil((mapData.getHeight() / 2) / tilesize); 
 
 		tiles = visionGridFactory.instance(rows, cols);
-	}
-
-	/*
-		register objects that want to know about vision state changes
-	*/
-	public function register(client : IVisionClient)
-	{
-		if(clientRegistry.indexOf(client) == -1)
-		{
-			clientRegistry.push(client);
-		}
-	}
-
-	/*
-		unregister objects that no longer want to know about vision state changes
-	*/
-	public function unregister(client : IVisionClient)
-	{
-		if(clientRegistry.indexOf(client) >= 0)
-		{
-			clientRegistry.remove(client);
-		}
 	}
 
 	/*
@@ -132,8 +107,7 @@ class Vision implements IVisionServer
 			unitsTracked.set(id, {id : id, tx : tx, ty : ty, radius : radius});
 		}
 
-		var radiusGrid : IVisionGrid = visionStampFactory.instance(radius);
-		stamp(radiusGrid, tx, ty);
+		stamp(radius, tx, ty);
 	}
 
 	/*
@@ -163,14 +137,14 @@ class Vision implements IVisionServer
 	// private parts
 	/////////////////////////////////////////////////////////////
 
-
 	/*
 		stamp the grid with given 'stamp'
 		the given coordinates mark the stamp center target tile
 	*/
-	private function stamp(radiusGrid : IVisionGrid, tx : Int, ty : Int)
+	private function stamp(radius : Float, tx : Int, ty : Int)
 	{
-		var tr : Int = Math.round((radiusGrid.length - 1) / 2);
+		var stamp : IVisionGrid = visionStampFactory.instance(radius);
+		var tr : Int = Math.round((stamp.length - 1) / 2);
 
 		var rx : Int = 0;
 		for(x in tx-tr...tx+tr+1)
@@ -180,9 +154,9 @@ class Vision implements IVisionServer
 			{
 				if(inBounds(x, y))
 				{
-					if(radiusGrid[rx][ry].seenShape > 0)
+					if(stamp[rx][ry].seenShape > 0)
 					{
-						setTile(x, y, radiusGrid[rx][ry]);
+						setTile(x, y, stamp[rx][ry]);
 					}
 				}
 				ry++;
@@ -219,7 +193,7 @@ class Vision implements IVisionServer
 
 			if(dirty)
 			{
-				broadcastChange(tx, ty);
+				visionBroadcaster.visionChange(gridTile);
 			}
 		}
 	}
@@ -240,18 +214,6 @@ class Vision implements IVisionServer
 		else
 		{
 			return true;
-		}
-	}
-
-	/*
-		let our client objects know something has changed in the players vision
-		for example, a 'fog of war' object may want to paint fog where the player can't see
-	*/
-	private function broadcastChange(tx : Int, ty : Int)
-	{
-		for(idx in 0...clientRegistry.length)
-		{
-			clientRegistry[idx].onVisionChange(tiles[tx][ty]);
 		}
 	}
 }
