@@ -6,12 +6,6 @@ import openfl.geom.Point;
 import interfaces.IVision;
 
 /*
-	add Grid typedef just to make this class more readable
-	Grid is a two dimensional array of IVisionTiles
-*/
-typedef Grid = Array<Array<IVisionTile>>;
-
-/*
 	structure for storing tracking data about vision-providing units
 */
 typedef Unit = 
@@ -28,13 +22,13 @@ typedef Unit =
 class Vision implements IVisionServer
 {
 	// size of each Vision Tile in pixels
-	private var tilesize : Int = 12;
+	private var tilesize : Int;
 
 	// map dimensions, map name etc. can be gotten from this
 	private var mapData : MapData;
 
 	// the grid of vision tiles
-	private var tiles : Grid;
+	private var tiles : IVisionGrid;
 
 	// number of rows (height in tiles)
 	private var rows : Int;
@@ -45,17 +39,23 @@ class Vision implements IVisionServer
 	// array of objects interested in vision changes
 	private var clientRegistry : Array<IVisionClient>;
 
-	// cache of vision 'stamps', one for each radius used in the game
-	private var radiusGridCache : Map<String, Grid>;
-
 	// here's where we keep record of our tracked units
 	private var unitsTracked : Map<String, Unit>;
 
-	public function new(mapData : MapData)
+	// our source of stamps (one per unit range in the game)
+	private var visionStampFactory : VisionStampFactory;
+
+	// our source of grids
+	private var visionGridFactory : VisionGridFactory;
+
+	public function new(tilesize : Int, mapData : MapData, visionStampFactory : VisionStampFactory, visionGridFactory : VisionGridFactory)
 	{
+		this.tilesize = tilesize;
 		this.mapData = mapData;
+		this.visionStampFactory = visionStampFactory;
+		this.visionGridFactory = visionGridFactory;
+
 		clientRegistry = new Array<IVisionClient>();
-		radiusGridCache = new Map<String, Grid>();
 		unitsTracked = new Map<String, Unit>();
 	}
 
@@ -73,7 +73,7 @@ class Vision implements IVisionServer
 		// the division by 2 is because the fog of war only covers HALF of the map
 		rows = Math.ceil((mapData.getHeight() / 2) / tilesize); 
 
-		tiles = newGrid(rows, cols);
+		tiles = visionGridFactory.instance(rows, cols);
 	}
 
 	/*
@@ -132,7 +132,7 @@ class Vision implements IVisionServer
 			unitsTracked.set(id, {id : id, tx : tx, ty : ty, radius : radius});
 		}
 
-		var radiusGrid : Grid = getRadiusGrid(radius);
+		var radiusGrid : IVisionGrid = visionStampFactory.instance(radius);
 		stamp(radiusGrid, tx, ty);
 	}
 
@@ -168,7 +168,7 @@ class Vision implements IVisionServer
 		stamp the grid with given 'stamp'
 		the given coordinates mark the stamp center target tile
 	*/
-	private function stamp(radiusGrid : Grid, tx : Int, ty : Int)
+	private function stamp(radiusGrid : IVisionGrid, tx : Int, ty : Int)
 	{
 		var tr : Int = Math.round((radiusGrid.length - 1) / 2);
 
@@ -180,119 +180,15 @@ class Vision implements IVisionServer
 			{
 				if(inBounds(x, y))
 				{
-					//if(tiles[x][y].value == IVision.None)
-					//{
-						if(radiusGrid[rx][ry].seenShape > 0)
-						{
-							setTile(x, y, radiusGrid[rx][ry]);
-						}
-					//}
+					if(radiusGrid[rx][ry].seenShape > 0)
+					{
+						setTile(x, y, radiusGrid[rx][ry]);
+					}
 				}
 				ry++;
 			}
 			rx++;
 		}
-	}
-
-	/*
-		get a vision 'stamp' for the given radius
-	*/
-	private function getRadiusGrid(radius : Float)
-	{
-		var radiusID : String = Std.string(Math.round(radius));
-
-		if(!radiusGridCache.exists(radiusID))
-		{
-			radiusGridCache.set(radiusID, newRadiusGrid(radius));	
-		}
-
-		return radiusGridCache.get(radiusID);
-	}
-
-	/*
-		instanciate a new vision 'stamp' for the given radius
-	*/
-	private function newRadiusGrid(radius : Float) : Grid
-	{
-		var gridCenter : Int = Math.ceil(radius / tilesize);
-		var gridSize : Int = (gridCenter * 2) + 1;
-
-		var radiusGrid : Grid = newGrid(gridSize, gridSize);
-
-		var quadraticTileSize : Float = Math.sqrt((Math.pow(tilesize, 2) * 2));
-		//trace("radius:"+radius+" tilesize:"+tilesize+" qtilesize:"+quadraticTileSize);
-		if(radius < quadraticTileSize) trace("WARNING: radius too small for vision grid granularity (radius = "+radius+"tilesize = "+tilesize+")");
-
-		for(x in 0...gridSize)
-		{
-			for(y in 0...gridSize)
-			{
-				var d = distance(x, y, gridCenter, gridCenter);
-				if(d <= radius)
-				{
-					radiusGrid[x][y].value = IVision.Seen;
-					if(radius-d <= quadraticTileSize)
-					{
-						radiusGrid[x][y].seenShape = 1; //edge
-					}
-					else
-					{
-						radiusGrid[x][y].seenShape = 3; //in
-					}
-				}
-				else
-				{
-					if(d-radius <= quadraticTileSize)
-					{
-						radiusGrid[x][y].seenShape = 1; //edge
-					}
-					else
-					{
-						radiusGrid[x][y].seenShape = 0; //out
-					}
-				}
-				//trace("x:"+x+" y:"+y+" d:"+d+" shape:"+radiusGrid[x][y].seenShape);
-			}
-		}
-
-		return radiusGrid;
-	}
-
-	/*
-		calculate the distance in pixels between two tile centers
-	*/
-	private function distance(x1 : Int, y1 : Int, x2 : Int, y2 : Int) : Float
-	{
-		var d : Float = tilesize * Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-		return d;
-	}
-
-	/*
-		instanciate a new vision tile grid
-	*/
-	private function newGrid(rows : Int, cols : Int) : Grid
-	{
-		var grid = new Grid();
-
-		for(x in 0...cols)
-		{
-			grid[x] = new Array<IVisionTile>();
-			for(y in 0...rows)
-			{
-				grid[x][y] = 
-				{
-					tx : x, 
-					ty : y, 
-					value : IVision.None, 
-					rect : new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize),
-					point : new Point(x*tilesize, y*tilesize),
-					seenShape : 0,
-					fullShape : 0
-				};
-			}
-		}
-
-		return grid;
 	}
 
 	/*

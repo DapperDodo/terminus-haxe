@@ -12,6 +12,8 @@ import core.MapDefinitionLoader;
 import core.MapData;
 
 import interfaces.IVision;
+import core.VisionStampFactory;
+import core.VisionGridFactory;
 import core.Vision;
 
 import head.BitmapFactory;
@@ -31,10 +33,16 @@ class Main extends UpdateSprite
 		super ();
 		stage.frameRate = 60;
 
+		// configuration
+		var fogOfWarGranularity : Int = 12;
+
+
 		// instanciate core classes
 		var mapDefinitionLoader : MapDefinitionLoader = new MapDefinitionLoader();
 		var mapData : MapData = new MapData(mapDefinitionLoader);
-        var playerVision : IVisionServer = new Vision(mapData);
+        var visionGridFactory : VisionGridFactory = new VisionGridFactory(fogOfWarGranularity);
+        var visionStampFactory : VisionStampFactory = new VisionStampFactory(fogOfWarGranularity, visionGridFactory);
+        var playerVision : IVisionServer = new Vision(fogOfWarGranularity, mapData, visionStampFactory, visionGridFactory);
 
 		// load map data
 		mapData.load("hello_world");

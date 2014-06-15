@@ -42,6 +42,15 @@ typedef IVisionTile =
 }
 
 /*
+	a VisionGrid is a two dimensional array of IVisionTiles
+	this can be used by:
+	- Vision (large grid, complete fog of war)
+	- Stamps (small grids, vision around a unit)
+*/
+typedef IVisionGrid = Array<Array<IVisionTile>>;
+
+
+/*
 	interface
 
 	client
