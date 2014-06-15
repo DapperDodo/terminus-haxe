@@ -64,7 +64,21 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 	public function onVisionChange(tile : IVisionTile) : Void
 	{
 		//trace("FogOfWar.onChange tx=" + tile.tx + ", ty=" + tile.ty + ", value=" + tile.value + ", rect=" + tile.rect + ", point=" + tile.point);
-		mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(tile.value).bitmapData, tile.rect, tile.point);
+		if(tile.seenShape == 0)
+		{
+			// no vision
+			mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(IVision.None).bitmapData, tile.rect, tile.point);
+		}
+		else if(tile.seenShape == 1)
+		{
+			// edge
+			mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(IVision.Seen).bitmapData, tile.rect, tile.point);
+		}
+		else if(tile.seenShape >= 2)
+		{
+			// seen
+			mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(IVision.Full).bitmapData, tile.rect, tile.point);
+		}
 
 		//dirtyTiles.push(tile);
 	}
@@ -72,8 +86,8 @@ class FogOfWar extends UpdateSprite implements IVisionClient
     private var testR : Float = 100;
     private var testX : Float = 640;
     private var testY : Float = 800;
-    private var testDX : Float = 25;
-    private var testDY : Float = -25;
+    private var testDX : Float = 50;
+    private var testDY : Float = -50;
 
     private var oneshot : Bool = true;
 
@@ -91,6 +105,18 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		{
 	        playerVision.track("UUID-foo", testX, testY, testR);
 	        playerVision.track("UUID-bar", testX-200, testY-200, testR-50);
+
+	        /*
+	        for(i in 0...10)
+	        {
+	        	var fx : Float = Math.random() * mapData.getWidth();
+	        	var fy : Float = Math.random() * (mapData.getHeight() / 2);
+	        	var r : Float = Math.random() * testR;
+	        	var ix : Int = Std.int(fx);
+	        	var iy : Int = Std.int(fy);
+		        playerVision.track("UUID-"+ix+"-"+iy, fx, fy, r);
+	        }
+	        */
 	        //oneshot = false;
 		}
 

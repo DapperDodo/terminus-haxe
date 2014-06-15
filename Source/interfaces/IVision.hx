@@ -37,7 +37,8 @@ typedef IVisionTile =
 	var value : IVision; 	// visibility mode
 	var rect  : Rectangle; 	// tile rectangle
 	var point : Point; 		// tile upper left corner coordinates
-	// add smooth shape info later
+	var seenShape  : Int ;	// 3x3 shape matrix encoded as int
+	var fullShape  : Int ;	// 3x3 shape matrix encoded as int
 }
 
 /*

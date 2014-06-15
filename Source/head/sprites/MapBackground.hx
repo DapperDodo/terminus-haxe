@@ -64,7 +64,7 @@ class MapBackground extends UpdateSprite
 
 	override private function onStart()
 	{
-		showHome();
+		//showHome();
 	}
 
 	/*

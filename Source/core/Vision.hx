@@ -28,7 +28,7 @@ typedef Unit =
 class Vision implements IVisionServer
 {
 	// size of each Vision Tile in pixels
-	private var tilesize : Int = 32;
+	private var tilesize : Int = 12;
 
 	// map dimensions, map name etc. can be gotten from this
 	private var mapData : MapData;
@@ -69,7 +69,9 @@ class Vision implements IVisionServer
 	public function init()
 	{
 		cols = Math.ceil(mapData.getWidth() / tilesize);
-		rows = Math.ceil((mapData.getHeight() / 2) / tilesize); // the division by 2 is because the fog of war only covers HALF of the map
+
+		// the division by 2 is because the fog of war only covers HALF of the map
+		rows = Math.ceil((mapData.getHeight() / 2) / tilesize); 
 
 		tiles = newGrid(rows, cols);
 	}
@@ -115,9 +117,14 @@ class Vision implements IVisionServer
 			}
 			else
 			{
+				// TODO: set Full to Seen where unit has moved out of range
+				/*
+				- take other nearby units into account
+				*/
+
+				// now update unit tracking coordinates
 				unit.tx = tx;
 				unit.ty = ty;
-				// TODO: set Full to Seen where unit has moved out of range
 			}
 		}
 		else
@@ -173,13 +180,13 @@ class Vision implements IVisionServer
 			{
 				if(inBounds(x, y))
 				{
-					if(tiles[x][y].value == IVision.None)
-					{
-						if(radiusGrid[rx][ry].value != IVision.None)
+					//if(tiles[x][y].value == IVision.None)
+					//{
+						if(radiusGrid[rx][ry].seenShape > 0)
 						{
-							setTile(x, y, radiusGrid[rx][ry].value);
+							setTile(x, y, radiusGrid[rx][ry]);
 						}
-					}
+					//}
 				}
 				ry++;
 			}
@@ -207,23 +214,48 @@ class Vision implements IVisionServer
 	*/
 	private function newRadiusGrid(radius : Float) : Grid
 	{
-		var mid : Int = Math.ceil(radius / tilesize);
-		var size : Int = (mid * 2) + 1;
+		var gridCenter : Int = Math.ceil(radius / tilesize);
+		var gridSize : Int = (gridCenter * 2) + 1;
 
-		var radiusgrid : Grid = newGrid(size, size);
+		var radiusGrid : Grid = newGrid(gridSize, gridSize);
 
-		for(x in 0...size)
+		var quadraticTileSize : Float = Math.sqrt((Math.pow(tilesize, 2) * 2));
+		//trace("radius:"+radius+" tilesize:"+tilesize+" qtilesize:"+quadraticTileSize);
+		if(radius < quadraticTileSize) trace("WARNING: radius too small for vision grid granularity (radius = "+radius+"tilesize = "+tilesize+")");
+
+		for(x in 0...gridSize)
 		{
-			for(y in 0...size)
+			for(y in 0...gridSize)
 			{
-				if(distance(x, y, mid, mid) <= radius)
+				var d = distance(x, y, gridCenter, gridCenter);
+				if(d <= radius)
 				{
-					radiusgrid[x][y].value = IVision.Full;
+					radiusGrid[x][y].value = IVision.Seen;
+					if(radius-d <= quadraticTileSize)
+					{
+						radiusGrid[x][y].seenShape = 1; //edge
+					}
+					else
+					{
+						radiusGrid[x][y].seenShape = 3; //in
+					}
 				}
+				else
+				{
+					if(d-radius <= quadraticTileSize)
+					{
+						radiusGrid[x][y].seenShape = 1; //edge
+					}
+					else
+					{
+						radiusGrid[x][y].seenShape = 0; //out
+					}
+				}
+				//trace("x:"+x+" y:"+y+" d:"+d+" shape:"+radiusGrid[x][y].seenShape);
 			}
 		}
 
-		return radiusgrid;
+		return radiusGrid;
 	}
 
 	/*
@@ -253,8 +285,9 @@ class Vision implements IVisionServer
 					ty : y, 
 					value : IVision.None, 
 					rect : new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize),
-					point : new Point(x*tilesize, y*tilesize)
-					//add smoothing information later
+					point : new Point(x*tilesize, y*tilesize),
+					seenShape : 0,
+					fullShape : 0
 				};
 			}
 		}
@@ -266,13 +299,30 @@ class Vision implements IVisionServer
 		set a vision state to a tile
 		if the vision state has altered, broadcast the vision change
 	*/
-	private function setTile(tx : Int, ty : Int, v : IVision)
+	private function setTile(tx : Int, ty : Int, stampTile : IVisionTile)
 	{
+		var dirty : Bool = false;
+		var gridTile = tiles[tx][ty];
 		if(inBounds(tx, ty))
 		{
-			if(tiles[tx][ty].value != v)
+			//value 
+			if(gridTile.value != stampTile.value)
 			{
-				tiles[tx][ty].value = v;
+				gridTile.value = stampTile.value;
+				dirty = true;
+			}
+
+			//shape
+			//if(gridTile.seenShape > 0) trace("tile: " + gridTile.seenShape + ", stamp: " + stampTile.seenShape + ", OR: " + (gridTile.seenShape | stampTile.seenShape));
+			if(gridTile.seenShape != (gridTile.seenShape | stampTile.seenShape))
+			{
+				//if(gridTile.seenShape > 0) trace("shape changed! " + gridTile.seenShape + " is now " + (gridTile.seenShape | stampTile.seenShape));
+				gridTile.seenShape = (gridTile.seenShape | stampTile.seenShape);
+				dirty = true;
+			}
+
+			if(dirty)
+			{
 				broadcastChange(tx, ty);
 			}
 		}
