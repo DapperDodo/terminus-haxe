@@ -15,6 +15,7 @@ import interfaces.IVision;
 import core.VisionRegistryCaster;
 import core.VisionStampFactory;
 import core.VisionGridFactory;
+import core.VisionUnitStore;
 import core.Vision;
 
 import head.BitmapFactory;
@@ -34,9 +35,6 @@ class Main extends UpdateSprite
 		super ();
 		stage.frameRate = 60;
 
-		// configuration
-		var fogOfWarGranularity : Int = 12;
-
 		///////////////////////////////////////////////////
 		// CORE objects
 		///////////////////////////////////////////////////
@@ -44,17 +42,21 @@ class Main extends UpdateSprite
 		// subsystem Map
 		var mapDefinitionLoader : MapDefinitionLoader = new MapDefinitionLoader();
 		var mapData : MapData = new MapData(mapDefinitionLoader);
-		// subsystem Vision
+
+		// subsystem Vision (shared)
+		var fogOfWarGranularity : Int = 12;
+        var visionGridFactory : IVisionGridFactory = new VisionGridFactory();
+        var visionStampFactory : IVisionStampFactory = new VisionStampFactory(visionGridFactory);
+		// subsystem Vision (player 1) TODO: add objects for player 2
 		var visionRegistry : IVisionRegistry = new VisionRegistryCaster();
 		var visionBroadcaster : IVisionBroadcaster = cast(visionRegistry, IVisionBroadcaster); //implements registry and broadcast interfaces
-        var visionGridFactory : VisionGridFactory = new VisionGridFactory(fogOfWarGranularity);
-        var visionStampFactory : VisionStampFactory = new VisionStampFactory(fogOfWarGranularity, visionGridFactory);
-        var visionServer : IVisionServer = new Vision(fogOfWarGranularity, mapData, visionStampFactory, visionGridFactory, visionBroadcaster);
+        var visionUnitStore : IVisionUnitStore = new VisionUnitStore();
+        var visionServer : IVisionServer = new Vision(visionStampFactory, visionGridFactory, visionBroadcaster, visionUnitStore);
         var visionTracker : IVisionTracker = cast(visionServer, IVisionTracker); //implements server and tracker interfaces
 
 		// load map data
 		mapData.load("hello_world");
-		visionServer.init();
+		visionServer.init(fogOfWarGranularity, mapData.getWidth(), mapData.getHeight() / 2);
 
 		///////////////////////////////////////////////////
 		// HEAD objects
@@ -76,6 +78,7 @@ class Main extends UpdateSprite
 
         assetLoader.load(function()
         {
+        	var visionUnitStore : VisionUnitStore = new VisionUnitStore();
 	        this.postLoad();
 
         	// start game loop

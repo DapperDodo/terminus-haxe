@@ -49,7 +49,6 @@ typedef IVisionTile =
 */
 typedef IVisionGrid = Array<Array<IVisionTile>>;
 
-
 /*
 	interface
 
@@ -84,8 +83,10 @@ interface IVisionBroadcaster
 */
 interface IVisionServer
 {
-	public function init() : Void;
-	public function check(x : Float, y : Float) : IVision;
+	/*
+		initialize the vision system with a granularity/tilesize, width and height in pixels
+	*/
+	public function init(tilesize : Int, width : Float, height : Float) : Void;
 }
 
 /*
@@ -97,7 +98,7 @@ interface IVisionServer
 */
 interface IVisionTracker
 {
-	public function track(id : String, x : Float, y : Float, radius : Float) : Void;
+	public function track(unitId : String, x : Float, y : Float, radius : Float) : Void;
 }
 
 /*
@@ -111,4 +112,44 @@ interface IVisionRegistry
 {
 	public function register(client : IVisionClient) : Void;
 	public function unregister(client : IVisionClient) : Void;
+}
+
+/*
+	interface
+
+	gridfactory
+
+	manage instanciation of vision grids
+*/
+interface IVisionGridFactory
+{
+	public function instance(rows : Int, cols : Int, tilesize : Int) : IVisionGrid;
+}
+
+/*
+	interface
+
+	stampfactory
+
+	manage instanciation of radius stamps
+*/
+interface IVisionStampFactory
+{
+	public function instance(radius : Float, tilesize : Int) : IVisionGrid;
+}
+
+/*
+	interface
+
+	unit store
+
+	cache unit tracking information
+*/
+interface IVisionUnitStore
+{
+	/*
+		return true if unit moved to another tile or was not yet tracked
+		returns false if unit stays in the same tile
+	*/
+	public function update(unitId : String, tx : Int, ty : Int, radius : Float) : Bool;
 }

@@ -5,16 +5,11 @@ import openfl.geom.Point;
 
 import interfaces.IVision;
 
-class VisionGridFactory
+class VisionGridFactory implements IVisionGridFactory
 {
-	private var tilesize : Int;
+	public function new(){}
 
-	public function new(tilesize : Int)
-	{
-		this.tilesize = tilesize;
-	}
-
-	public function instance(rows : Int, cols : Int) : IVisionGrid
+	public function instance(rows : Int, cols : Int, tilesize : Int) : IVisionGrid
 	{
 		var grid = new IVisionGrid();
 

@@ -2,39 +2,30 @@ package core;
 
 import interfaces.IVision;
 
-class VisionStampFactory
+class VisionStampFactory implements IVisionStampFactory
 {
-	// vision system's granularity
-	private var tilesize : Int;
+	private var visionGridFactory : IVisionGridFactory;
 
-	// cache of vision 'stamps', one for each radius used in the game
 	private var cache : Map<String, IVisionGrid>;
 
-	// our source of vision grids
-	private var visionGridFactory : VisionGridFactory;
-
-	public function new(tilesize : Int, visionGridFactory : VisionGridFactory)
+	public function new(visionGridFactory : IVisionGridFactory)
 	{
-		this.tilesize = tilesize;
-		cache = new Map<String, IVisionGrid>();
 		this.visionGridFactory = visionGridFactory;
+
+		cache = new Map<String, IVisionGrid>();
 	}
 
-	/*
-		get a vision 'stamp' for the given radius
-	*/
-	public function instance(radius : Float)
+	public function instance(radius : Float, tilesize : Int) : IVisionGrid
 	{
 		var id : String = getID(radius);
 
 		if(!cache.exists(id))
 		{
-			cache.set(id, newVisionStamp(radius));	
+			cache.set(id, newVisionStamp(radius, tilesize));	
 		}
 
 		return cache.get(id);
 	}
-
 
 	/////////////////////////////////////////////////////////////
 	// private parts
@@ -51,12 +42,12 @@ class VisionStampFactory
 	/*
 		instanciate a new vision 'stamp' for the given radius
 	*/
-	private function newVisionStamp(radius : Float) : IVisionGrid
+	private function newVisionStamp(radius : Float, tilesize : Int) : IVisionGrid
 	{
 		var gridCenter : Int = Math.ceil(radius / tilesize);
 		var gridSize : Int = (gridCenter * 2) + 1;
 
-		var radiusGrid : IVisionGrid = visionGridFactory.instance(gridSize, gridSize);
+		var radiusGrid : IVisionGrid = visionGridFactory.instance(gridSize, gridSize, tilesize);
 
 		var quadraticTileSize : Float = Math.sqrt((Math.pow(tilesize, 2) * 2));
 		//trace("radius:"+radius+" tilesize:"+tilesize+" qtilesize:"+quadraticTileSize);
@@ -66,7 +57,7 @@ class VisionStampFactory
 		{
 			for(y in 0...gridSize)
 			{
-				var d = distance(x, y, gridCenter, gridCenter);
+				var d = distance(x, y, gridCenter, gridCenter, tilesize);
 				if(d <= radius)
 				{
 					radiusGrid[x][y].value = IVision.Seen;
@@ -100,7 +91,7 @@ class VisionStampFactory
 	/*
 		calculate the distance in pixels between two tile centers
 	*/
-	private function distance(x1 : Int, y1 : Int, x2 : Int, y2 : Int) : Float
+	private function distance(x1 : Int, y1 : Int, x2 : Int, y2 : Int, tilesize : Int) : Float
 	{
 		var d : Float = tilesize * Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 		return d;

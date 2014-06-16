@@ -3,29 +3,23 @@ package core;
 import interfaces.IVision;
 
 /*
-	structure for storing tracking data about vision-providing units
-*/
-typedef Unit = 
-{
-	id : String,
-	tx : Int, 
-	ty : Int,
-	radius : Float
-};
-
-/*
 	An instance of this class should be attached to each player in the game
 */
 class Vision implements IVisionServer implements IVisionTracker
 {
+	private var visionStampFactory : IVisionStampFactory;
+	private var visionGridFactory : IVisionGridFactory;
+	private var visionBroadcaster : IVisionBroadcaster;
+	private var visionUnitStore : IVisionUnitStore;
+
 	// size of each Vision Tile in pixels
 	private var tilesize : Int;
 
-	// map dimensions, map name etc. can be gotten from this
-	private var mapData : MapData;
+	// map width (pixels)
+	private var width : Float;
 
-	// the grid of vision tiles
-	private var tiles : IVisionGrid;
+	// map height (pixels)
+	private var height : Float;
 
 	// number of rows (height in tiles)
 	private var rows : Int;
@@ -33,103 +27,57 @@ class Vision implements IVisionServer implements IVisionTracker
 	// number of cols (width in tiles)
 	private var cols : Int;
 
-	// here's where we keep record of our tracked units
-	private var unitsTracked : Map<String, Unit>;
+	// the grid of vision tiles
+	private var tiles : IVisionGrid;
 
-	// our source of stamps (one per unit range in the game)
-	private var visionStampFactory : VisionStampFactory;
-
-	// our source of grids
-	private var visionGridFactory : VisionGridFactory;
-
-	// send vision channel changes out through a broadcaster
-	private var visionBroadcaster : IVisionBroadcaster;
-
-	public function new(tilesize : Int, mapData : MapData, visionStampFactory : VisionStampFactory, visionGridFactory : VisionGridFactory, visionBroadcaster : IVisionBroadcaster)
+	public function new
+	(
+		visionStampFactory : IVisionStampFactory, 
+		visionGridFactory : IVisionGridFactory, 
+		visionBroadcaster : IVisionBroadcaster,
+		visionUnitStore : IVisionUnitStore
+	)
 	{
-		this.tilesize = tilesize;
-		this.mapData = mapData;
 		this.visionStampFactory = visionStampFactory;
 		this.visionGridFactory = visionGridFactory;
 		this.visionBroadcaster = visionBroadcaster;
-
-		unitsTracked = new Map<String, Unit>();
+		this.visionUnitStore = visionUnitStore;
 	}
 
 
-	/*
-		called when map data is loaded
-		initialize the map visibility 
-		start fully unexplored
-		covers one half of the map (enemy's side)
-	*/
-	public function init()
+	// implement IVisionServer
+
+	public function init(tilesize : Int, width : Float, height : Float)
 	{
-		cols = Math.ceil(mapData.getWidth() / tilesize);
+		this.tilesize = tilesize;
 
-		// the division by 2 is because the fog of war only covers HALF of the map
-		rows = Math.ceil((mapData.getHeight() / 2) / tilesize); 
+		this.width = width;
+		this.height = height;
 
-		tiles = visionGridFactory.instance(rows, cols);
+		cols = Math.ceil(width / tilesize);
+		rows = Math.ceil(height / tilesize); 
+
+		tiles = visionGridFactory.instance(rows, cols, tilesize);
 	}
 
-	/*
-		friendly units can let the vision system know where they are providing vision for the player
-		the vision system will track their current field of vision (Full)
-		the vision system will also track the explored parts of the map (Seen)
-	*/
-	public function track(id : String, x : Float, y : Float, radius : Float) : Void
-	{
-		var tx = Math.floor(x / tilesize);
-		var ty = Math.floor(y / tilesize);
+	// implement IVisionTracker
 
-		if(unitsTracked.exists(id))
-		{
-			var unit : Unit = unitsTracked.get(id);
-			if(unit.tx == tx && unit.ty == ty)
-			{
-				return;
-			}
-			else
-			{
-				// TODO: set Full to Seen where unit has moved out of range
-				/*
-				- take other nearby units into account
-				*/
-
-				// now update unit tracking coordinates
-				unit.tx = tx;
-				unit.ty = ty;
-			}
-		}
-		else
-		{
-			unitsTracked.set(id, {id : id, tx : tx, ty : ty, radius : radius});
-		}
-
-		stamp(radius, tx, ty);
-	}
-
-	/*
-		return the vision state of any position on the map
-	*/
-	public function check(x : Float, y : Float) : IVision
+	public function track(unitId : String, x : Float, y : Float, radius : Float) : Void
 	{
 		var tx = Math.floor(x / tilesize);
 		var ty = Math.floor(y / tilesize);
 		if(inBounds(tx, ty))
-		{
-			return tiles[tx][ty].value;
-		}
-		else if(y >= (mapData.getHeight() / 2))
-		{
-			// full vision on own side of the map
-			return IVision.Full;
-		}
-		else
-		{
-			// no vision on invalid places
-			return IVision.None;
+		{	
+			if(visionUnitStore.update(unitId, tx, ty, radius))
+			{
+				// moved to another tile
+				stamp(radius, tx, ty);
+			}
+			else
+			{
+				// same tile
+				return;
+			}
 		}
 	}
 
@@ -143,7 +91,7 @@ class Vision implements IVisionServer implements IVisionTracker
 	*/
 	private function stamp(radius : Float, tx : Int, ty : Int)
 	{
-		var stamp : IVisionGrid = visionStampFactory.instance(radius);
+		var stamp : IVisionGrid = visionStampFactory.instance(radius, tilesize);
 		var tr : Int = Math.round((stamp.length - 1) / 2);
 
 		var rx : Int = 0;
@@ -173,28 +121,26 @@ class Vision implements IVisionServer implements IVisionTracker
 	{
 		var dirty : Bool = false;
 		var gridTile = tiles[tx][ty];
-		if(inBounds(tx, ty))
+
+		//value 
+		if(gridTile.value != stampTile.value)
 		{
-			//value 
-			if(gridTile.value != stampTile.value)
-			{
-				gridTile.value = stampTile.value;
-				dirty = true;
-			}
+			gridTile.value = stampTile.value;
+			dirty = true;
+		}
 
-			//shape
-			//if(gridTile.seenShape > 0) trace("tile: " + gridTile.seenShape + ", stamp: " + stampTile.seenShape + ", OR: " + (gridTile.seenShape | stampTile.seenShape));
-			if(gridTile.seenShape != (gridTile.seenShape | stampTile.seenShape))
-			{
-				//if(gridTile.seenShape > 0) trace("shape changed! " + gridTile.seenShape + " is now " + (gridTile.seenShape | stampTile.seenShape));
-				gridTile.seenShape = (gridTile.seenShape | stampTile.seenShape);
-				dirty = true;
-			}
+		//shape
+		//if(gridTile.seenShape > 0) trace("tile: " + gridTile.seenShape + ", stamp: " + stampTile.seenShape + ", OR: " + (gridTile.seenShape | stampTile.seenShape));
+		if(gridTile.seenShape != (gridTile.seenShape | stampTile.seenShape))
+		{
+			//if(gridTile.seenShape > 0) trace("shape changed! " + gridTile.seenShape + " is now " + (gridTile.seenShape | stampTile.seenShape));
+			gridTile.seenShape = (gridTile.seenShape | stampTile.seenShape);
+			dirty = true;
+		}
 
-			if(dirty)
-			{
-				visionBroadcaster.visionChange(gridTile);
-			}
+		if(dirty)
+		{
+			visionBroadcaster.visionChange(gridTile);
 		}
 	}
 
