@@ -51,7 +51,7 @@ class VisionStampFactory implements IVisionStampFactory
 
 		var quadraticTileSize : Float = Math.sqrt((Math.pow(tilesize, 2) * 2));
 		//trace("radius:"+radius+" tilesize:"+tilesize+" qtilesize:"+quadraticTileSize);
-		if(radius < quadraticTileSize) trace("WARNING: radius too small for vision grid granularity (radius = "+radius+"tilesize = "+tilesize+")");
+		if(radius < quadraticTileSize) trace("WARNING: radius too small for vision grid granularity (radius = " + radius + " tilesize = " + tilesize + ")");
 
 		for(x in 0...gridSize)
 		{
@@ -63,18 +63,18 @@ class VisionStampFactory implements IVisionStampFactory
 					radiusGrid[x][y].value = IVision.Seen;
 					if(radius-d <= quadraticTileSize)
 					{
-						radiusGrid[x][y].seenShape = 1; //edge
+						radiusGrid[x][y].seenShape = shape(); //edge
 					}
 					else
 					{
-						radiusGrid[x][y].seenShape = 2; //in
+						radiusGrid[x][y].seenShape = 511; //in
 					}
 				}
 				else
 				{
 					if(d-radius <= quadraticTileSize)
 					{
-						radiusGrid[x][y].seenShape = 1; //edge
+						radiusGrid[x][y].seenShape = shape(); //edge
 					}
 					else
 					{
@@ -86,6 +86,11 @@ class VisionStampFactory implements IVisionStampFactory
 		}
 
 		return radiusGrid;
+	}
+
+	private function shape() : Int
+	{
+		return Std.random(512);
 	}
 
 	/*

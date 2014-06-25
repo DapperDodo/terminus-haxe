@@ -86,7 +86,7 @@ class Vision implements IVisionServer implements IVisionTracker
 	/////////////////////////////////////////////////////////////
 
 	/*
-		stamp the grid with given 'stamp'
+		stamp the grid
 		the given coordinates mark the stamp center target tile
 	*/
 	private function stamp(radius : Float, tx : Int, ty : Int)
@@ -135,6 +135,7 @@ class Vision implements IVisionServer implements IVisionTracker
 		{
 			//if(gridTile.seenShape > 0) trace("shape changed! " + gridTile.seenShape + " is now " + (gridTile.seenShape | stampTile.seenShape));
 			gridTile.seenShape = (gridTile.seenShape | stampTile.seenShape);
+			if(gridTile.seenShape == 511 && gridTile.value == IVision.None) gridTile.value = IVision.Seen;
 			dirty = true;
 		}
 

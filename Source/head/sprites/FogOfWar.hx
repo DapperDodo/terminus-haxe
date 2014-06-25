@@ -3,7 +3,10 @@ package head.sprites;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
 
+import openfl.geom.Point;
+
 import interfaces.IVision;
+import interfaces.IFog;
 
 import core.MapData;
 
@@ -15,12 +18,22 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 	private var assetLoader : AssetLoader;
 	private var visionRegistry : IVisionRegistry;
 	private var visionTracker : IVisionTracker;
+	private var fogTileProjector : IFogTileProjector;
 
 	private var fogBitmaps : Map<IVision, Bitmap>;
 
 	private var dirtyTiles : Array<IVisionTile>;
 
-	public function new(mapData : MapData, mapBackground : MapBackground, bitmapFactory : BitmapFactory, assetLoader : AssetLoader, visionRegistry : IVisionRegistry, visionTracker : IVisionTracker)
+	public function new
+	(
+		mapData : MapData, 
+		mapBackground : MapBackground, 
+		bitmapFactory : BitmapFactory, 
+		assetLoader : AssetLoader, 
+		visionRegistry : IVisionRegistry, 
+		visionTracker : IVisionTracker, 
+		fogTileProjector : IFogTileProjector
+	)
 	{
 		super();
 
@@ -29,6 +42,7 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		this.assetLoader = assetLoader;
 		this.visionRegistry = visionRegistry;
 		this.visionTracker = visionTracker;
+		this.fogTileProjector = fogTileProjector;
 
 		fogBitmaps = new Map<IVision, Bitmap>();
 		fogBitmaps.set(IVision.None, bitmapFactory.getInstance());
@@ -65,23 +79,21 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 	/* needed for IVisionClient interface */
 	public function onVisionChange(tile : IVisionTile) : Void
 	{
-		//trace("FogOfWar.onChange tx=" + tile.tx + ", ty=" + tile.ty + ", value=" + tile.value + ", rect=" + tile.rect + ", point=" + tile.point);
 		if(tile.seenShape == 0)
 		{
 			// no vision
-			mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(IVision.None).bitmapData, tile.rect, tile.point);
+			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.None).bitmapData);
 		}
-		else if(tile.seenShape == 1)
-		{
-			// edge
-			mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(IVision.Seen).bitmapData, tile.rect, tile.point);
-		}
-		else if(tile.seenShape >= 2)
+		else if(tile.seenShape >= 511)
 		{
 			// seen
-			mapBackground.bitmap().bitmapData.copyPixels(fogBitmaps.get(IVision.Full).bitmapData, tile.rect, tile.point);
+			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Full).bitmapData);
 		}
-
+		else
+		{
+			// edge
+			fogTileProjector.bakeEdge(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.None).bitmapData, fogBitmaps.get(IVision.Seen).bitmapData);
+		}
 		//dirtyTiles.push(tile);
 	}
 
@@ -116,7 +128,7 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 	        	var r : Float = Math.random() * testR;
 	        	var ix : Int = Std.int(fx);
 	        	var iy : Int = Std.int(fy);
-		        playerVision.track("UUID-"+ix+"-"+iy, fx, fy, r);
+		        visionTracker.track("UUID-"+ix+"-"+iy, fx, fy, r);
 	        }
 	        */
 	        //oneshot = false;

@@ -37,8 +37,8 @@ typedef IVisionTile =
 	var value : IVision; 	// visibility mode
 	var rect  : Rectangle; 	// tile rectangle
 	var point : Point; 		// tile upper left corner coordinates
-	var seenShape  : Int ;	// 3x3 shape matrix encoded as int
-	var fullShape  : Int ;	// 3x3 shape matrix encoded as int
+	var seenShape  : Int ;	// bitwise encoded tile shape (permanent vision)
+	var fullShape  : Int ;	// bitwise encoded tile shape (current vision)
 }
 
 /*
@@ -48,6 +48,12 @@ typedef IVisionTile =
 	- Stamps (small grids, vision around a unit)
 */
 typedef IVisionGrid = Array<Array<IVisionTile>>;
+
+/*
+	a TileShape is a two dimensional grid of bools (bits)
+	it can be encoded into an Int for fast bitwise operations
+*/
+typedef IVisionTileShape = Array<Array<Bool>>;
 
 /*
 	interface

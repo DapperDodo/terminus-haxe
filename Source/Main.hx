@@ -24,7 +24,11 @@ import head.AssetLoader;
 import head.sprites.MapBackground;
 import head.sprites.UpdateSprite;
 import head.sprites.ViewToggle;
+
+import interfaces.IFog;
 import head.sprites.FogOfWar;
+import head.FogMaskFactory;
+import head.FogTileProjector;
 
 class Main extends UpdateSprite 
 {	
@@ -44,7 +48,7 @@ class Main extends UpdateSprite
 		var mapData : MapData = new MapData(mapDefinitionLoader);
 
 		// subsystem Vision (shared)
-		var fogOfWarGranularity : Int = 12;
+		var fogOfWarGranularity : Int = 24;
         var visionGridFactory : IVisionGridFactory = new VisionGridFactory();
         var visionStampFactory : IVisionStampFactory = new VisionStampFactory(visionGridFactory);
 		// subsystem Vision (player 1) TODO: add objects for player 2
@@ -65,7 +69,9 @@ class Main extends UpdateSprite
         var bitmapFactory : BitmapFactory = new BitmapFactory();
         var assetLoader : AssetLoader = new AssetLoader();
         var mapBackground : MapBackground = new MapBackground(mapData, bitmapFactory, assetLoader);
-        var fogOfWar : FogOfWar = new FogOfWar(mapData, mapBackground, bitmapFactory, assetLoader, visionRegistry, visionTracker);
+        var fogMaskFactory : IFogMaskFactory = new FogMaskFactory(fogOfWarGranularity);
+        var fogTileProjector : IFogTileProjector = new FogTileProjector(fogOfWarGranularity, fogMaskFactory);
+        var fogOfWar : FogOfWar = new FogOfWar(mapData, mapBackground, bitmapFactory, assetLoader, visionRegistry, visionTracker, fogTileProjector);
         var viewToggle : ViewToggle = new ViewToggle(bitmapFactory, assetLoader, mapBackground);
 
         // setup scene graph
