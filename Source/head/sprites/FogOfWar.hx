@@ -92,7 +92,7 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		else
 		{
 			// edge
-			fogTileProjector.bakeEdge(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.None).bitmapData, fogBitmaps.get(IVision.Seen).bitmapData);
+			fogTileProjector.bakeEdge(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Seen).bitmapData, fogBitmaps.get(IVision.None).bitmapData);
 		}
 		//dirtyTiles.push(tile);
 	}
@@ -119,6 +119,8 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		{
 	        visionTracker.track("UUID-foo", testX, testY, testR);
 	        visionTracker.track("UUID-bar", testX-200, testY-200, testR-50);
+	        visionTracker.track("UUID-qux", testX+200, testY-500, testR);
+	        visionTracker.track("UUID-dog", testX-200, testY-500, testR+50);
 
 	        /*
 	        for(i in 0...10)
@@ -131,7 +133,7 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		        visionTracker.track("UUID-"+ix+"-"+iy, fx, fy, r);
 	        }
 	        */
-	        //oneshot = false;
+	        oneshot = false;
 		}
 
 		testX += (testDX * (deltaTime / 1000));

@@ -50,10 +50,10 @@ typedef IVisionTile =
 typedef IVisionGrid = Array<Array<IVisionTile>>;
 
 /*
-	a TileShape is a two dimensional grid of bools (bits)
-	it can be encoded into an Int for fast bitwise operations
+	a TileShape is an Int representing a two dimensional grid of bools (bits)
+	the Int is necessary for fast bitwise operations
 */
-typedef IVisionTileShape = Array<Array<Bool>>;
+//typedef IVisionTileShape = Int;
 
 /*
 	interface
@@ -147,6 +147,55 @@ interface IVisionStampFactory
 /*
 	interface
 
+	vision stamp outliner
+
+	purpose: draw the outline (edge tiles) of a vision stamp
+*/
+interface IVisionStampOutliner
+{
+	public function draw(stamp : IVisionGrid, gridCenter : Int, radius : Float, tilesize : Int) : Void;
+}
+
+/*
+	interface
+
+	vision stamp filler
+
+	purpose: fill the inside of a stamp given an outline is already drawn
+*/
+interface IVisionStampFiller
+{
+	public function fill(stamp : IVisionGrid, gridSize : Int) : Void;
+}
+
+
+/*
+	interface
+
+	vision stamp edge shaper
+
+	purpose: determine the shape of an edge tile and encode it as an Int
+
+	straightBefore:
+		true : the edge tile before this one has the same X coordinate (straight)
+		false: the edge tile before this one has a different X coordinate (cross)
+	straightAfter:
+		true : the edge tile after this one has the same X coordinate (straight)
+		false: the edge tile after this one has a different X coordinate (cross)
+	octants: one of these
+	    6 7
+	  5     8
+	  4     1
+	    3 2
+*/
+interface IVisionEdgeShaper
+{
+	public function getShape(straightBefore : Bool, straightAfter : Bool, octant : Int) : Int;
+}
+
+/*
+	interface
+
 	unit store
 
 	cache unit tracking information
@@ -159,3 +208,4 @@ interface IVisionUnitStore
 	*/
 	public function update(unitId : String, tx : Int, ty : Int, radius : Float) : Bool;
 }
+

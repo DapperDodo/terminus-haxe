@@ -34,10 +34,10 @@ class FogTileProjector implements IFogTileProjector
 			{
 				var scrX : Int = Math.round(x+tile.point.x);
 				var scrY : Int = Math.round(y+tile.point.y);
-				var colorNone : UInt = base.getPixel32(scrX, scrY);
-				var colorSeen : UInt = layer.getPixel32(scrX, scrY);
+				var colorBase : UInt = base.getPixel32(scrX, scrY);
+				var colorLayer : UInt = layer.getPixel32(scrX, scrY);
 				var colorMask : UInt = mask.getPixel32(x,y);
-				var color : UInt = mergePixel(colorNone, colorSeen, colorMask);
+				var color : UInt = mergePixel(colorBase, colorLayer, colorMask);
 				dest.setPixel32(scrX, scrY, color);
 			}
 		}

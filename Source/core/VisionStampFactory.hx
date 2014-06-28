@@ -5,12 +5,21 @@ import interfaces.IVision;
 class VisionStampFactory implements IVisionStampFactory
 {
 	private var visionGridFactory : IVisionGridFactory;
+	private var visionStampOutliner : IVisionStampOutliner;
+	private var visionStampFiller : IVisionStampFiller;
 
 	private var cache : Map<String, IVisionGrid>;
 
-	public function new(visionGridFactory : IVisionGridFactory)
+	public function new
+	(
+		visionGridFactory : IVisionGridFactory, 
+		visionStampOutliner : IVisionStampOutliner, 
+		visionStampFiller : IVisionStampFiller
+	)
 	{
 		this.visionGridFactory = visionGridFactory;
+		this.visionStampOutliner = visionStampOutliner;
+		this.visionStampFiller = visionStampFiller;
 
 		cache = new Map<String, IVisionGrid>();
 	}
@@ -21,7 +30,7 @@ class VisionStampFactory implements IVisionStampFactory
 
 		if(!cache.exists(id))
 		{
-			cache.set(id, newVisionStamp(radius, tilesize));	
+			cache.set(id, makeVisionStamp(radius, tilesize));	
 		}
 
 		return cache.get(id);
@@ -40,65 +49,22 @@ class VisionStampFactory implements IVisionStampFactory
 	}
 
 	/*
-		instanciate a new vision 'stamp' for the given radius
+		make a new vision 'stamp' for the given radius
 	*/
-	private function newVisionStamp(radius : Float, tilesize : Int) : IVisionGrid
-	{
+	private function makeVisionStamp(radius : Float, tilesize : Int) : IVisionGrid
+	{	
 		var gridCenter : Int = Math.ceil(radius / tilesize);
 		var gridSize : Int = (gridCenter * 2) + 1;
 
-		var radiusGrid : IVisionGrid = visionGridFactory.instance(gridSize, gridSize, tilesize);
+		// get a stamp instance from the factory
+		var stamp : IVisionGrid = visionGridFactory.instance(gridSize, gridSize, tilesize);
 
-		var quadraticTileSize : Float = Math.sqrt((Math.pow(tilesize, 2) * 2));
-		//trace("radius:"+radius+" tilesize:"+tilesize+" qtilesize:"+quadraticTileSize);
-		if(radius < quadraticTileSize) trace("WARNING: radius too small for vision grid granularity (radius = " + radius + " tilesize = " + tilesize + ")");
+		// draw the outline
+		visionStampOutliner.draw(stamp, gridCenter, radius, tilesize);
 
-		for(x in 0...gridSize)
-		{
-			for(y in 0...gridSize)
-			{
-				var d = distance(x, y, gridCenter, gridCenter, tilesize);
-				if(d <= radius)
-				{
-					radiusGrid[x][y].value = IVision.Seen;
-					if(radius-d <= quadraticTileSize)
-					{
-						radiusGrid[x][y].seenShape = shape(); //edge
-					}
-					else
-					{
-						radiusGrid[x][y].seenShape = 511; //in
-					}
-				}
-				else
-				{
-					if(d-radius <= quadraticTileSize)
-					{
-						radiusGrid[x][y].seenShape = shape(); //edge
-					}
-					else
-					{
-						radiusGrid[x][y].seenShape = 0; //out
-					}
-				}
-				//trace("x:"+x+" y:"+y+" d:"+d+" shape:"+radiusGrid[x][y].seenShape);
-			}
-		}
+		// fill the stamp
+		visionStampFiller.fill(stamp, gridSize);
 
-		return radiusGrid;
-	}
-
-	private function shape() : Int
-	{
-		return Std.random(512);
-	}
-
-	/*
-		calculate the distance in pixels between two tile centers
-	*/
-	private function distance(x1 : Int, y1 : Int, x2 : Int, y2 : Int, tilesize : Int) : Float
-	{
-		var d : Float = tilesize * Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-		return d;
+		return stamp;
 	}
 }

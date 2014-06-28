@@ -31,8 +31,6 @@ class FogMaskFactory implements IFogMaskFactory
 					{
 						mask.setPixel32(x, y, 0);
 					}
-					// var alpha = Math.round(((x + y) / (tilesize * 2)) * 255);
-					// mask.setPixel32(x, y, (alpha << 24));
 				}
 			}
 			mask.unlock();
@@ -113,14 +111,14 @@ class FogMaskFactory implements IFogMaskFactory
 
 	private function getBit(idx : Int, shape : Int) : Bool
 	{
-		if(((shape >> idx) | 1) == 1)
+		if(((shape >> idx) & 1) == 1)
 		{
-			//trace("getBit [" + idx + "] from shape [" + shape + "] is TRUE");
+			// trace("getBit [" + idx + "] from shape [" + shape + "] is TRUE");
 			return true;
 		}
 		else
 		{
-			//trace("getBit [" + idx + "] from shape [" + shape + "] is FALSE");
+			// trace("getBit [" + idx + "] from shape [" + shape + "] is FALSE");
 			return false;
 		}
 	}

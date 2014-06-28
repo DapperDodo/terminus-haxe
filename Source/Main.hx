@@ -11,11 +11,17 @@ import openfl.events.Event;
 import core.MapDefinitionLoader;
 import core.MapData;
 
+import interfaces.IBit;
+import core.BitHelper;
+
 import interfaces.IVision;
 import core.VisionRegistryCaster;
 import core.VisionStampFactory;
 import core.VisionGridFactory;
 import core.VisionUnitStore;
+import core.VisionStampOutliner;
+import core.VisionStampFiller;
+import core.VisionEdgeShaper;
 import core.Vision;
 
 import head.BitmapFactory;
@@ -43,14 +49,20 @@ class Main extends UpdateSprite
 		// CORE objects
 		///////////////////////////////////////////////////
 
+		// helpers
+        var bitHelper : IBitHelper = new BitHelper();
+
 		// subsystem Map
 		var mapDefinitionLoader : MapDefinitionLoader = new MapDefinitionLoader();
 		var mapData : MapData = new MapData(mapDefinitionLoader);
 
 		// subsystem Vision (shared)
-		var fogOfWarGranularity : Int = 24;
+		var fogOfWarGranularity : Int = 18;
         var visionGridFactory : IVisionGridFactory = new VisionGridFactory();
-        var visionStampFactory : IVisionStampFactory = new VisionStampFactory(visionGridFactory);
+        var visionEdgeShaper : IVisionEdgeShaper = new VisionEdgeShaper(bitHelper);
+        var visionStampOutliner : IVisionStampOutliner = new VisionStampOutliner(visionEdgeShaper);
+        var visionStampFiller : IVisionStampFiller = new VisionStampFiller();
+        var visionStampFactory : IVisionStampFactory = new VisionStampFactory(visionGridFactory, visionStampOutliner, visionStampFiller);
 		// subsystem Vision (player 1) TODO: add objects for player 2
 		var visionRegistry : IVisionRegistry = new VisionRegistryCaster();
 		var visionBroadcaster : IVisionBroadcaster = cast(visionRegistry, IVisionBroadcaster); //implements registry and broadcast interfaces
