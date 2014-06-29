@@ -33,7 +33,9 @@ import head.sprites.ViewToggle;
 
 import interfaces.IFog;
 import head.sprites.FogOfWar;
-import head.FogMaskFactory;
+import head.FogMaskLoader;
+import head.FogMaskGenerator;
+import head.FogMaskCache;
 import head.FogTileProjector;
 
 class Main extends UpdateSprite 
@@ -57,7 +59,7 @@ class Main extends UpdateSprite
 		var mapData : MapData = new MapData(mapDefinitionLoader);
 
 		// subsystem Vision (shared)
-		var fogOfWarGranularity : Int = 18;
+		var fogOfWarGranularity : Int = 30;
         var visionGridFactory : IVisionGridFactory = new VisionGridFactory();
         var visionEdgeShaper : IVisionEdgeShaper = new VisionEdgeShaper(bitHelper);
         var visionStampOutliner : IVisionStampOutliner = new VisionStampOutliner(visionEdgeShaper);
@@ -81,8 +83,10 @@ class Main extends UpdateSprite
         var bitmapFactory : BitmapFactory = new BitmapFactory();
         var assetLoader : AssetLoader = new AssetLoader();
         var mapBackground : MapBackground = new MapBackground(mapData, bitmapFactory, assetLoader);
-        var fogMaskFactory : IFogMaskFactory = new FogMaskFactory(fogOfWarGranularity);
-        var fogTileProjector : IFogTileProjector = new FogTileProjector(fogOfWarGranularity, fogMaskFactory);
+        var fogMaskGenerator : IFogMaskFactory = new FogMaskGenerator(fogOfWarGranularity, bitHelper);
+        var fogMaskLoader : IFogMaskFactory = new FogMaskLoader(fogOfWarGranularity, fogMaskGenerator, assetLoader);
+        var fogMaskCache : IFogMaskFactory = new FogMaskCache(fogOfWarGranularity, fogMaskLoader);
+        var fogTileProjector : IFogTileProjector = new FogTileProjector(fogOfWarGranularity, fogMaskCache);
         var fogOfWar : FogOfWar = new FogOfWar(mapData, mapBackground, bitmapFactory, assetLoader, visionRegistry, visionTracker, fogTileProjector);
         var viewToggle : ViewToggle = new ViewToggle(bitmapFactory, assetLoader, mapBackground);
 

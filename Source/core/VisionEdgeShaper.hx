@@ -12,7 +12,7 @@ class VisionEdgeShaper implements IVisionEdgeShaper
 		this.bitHelper = bitHelper;
 	}
 
-	public function getShape(straightBefore : Bool, straightAfter : Bool, octant : Int) : Int
+	public function getShape(straightBefore : Bool, straightAfter : Bool, octant : Int) : IVisionTileShape
 	{
 		var shape : Int = 0;
 		if(straightBefore && straightAfter)

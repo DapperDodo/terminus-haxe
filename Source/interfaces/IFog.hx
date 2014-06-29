@@ -9,7 +9,7 @@ import interfaces.IVision;
 */
 interface IFogMaskFactory
 {
-	public function instance(shape : Int) : BitmapData;
+	public function instance(shape : IVisionTileShape) : BitmapData;
 }
 
 /*

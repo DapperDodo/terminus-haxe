@@ -87,7 +87,7 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		else if(tile.seenShape >= 511)
 		{
 			// seen
-			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Full).bitmapData);
+			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Seen).bitmapData);
 		}
 		else
 		{
@@ -100,8 +100,8 @@ class FogOfWar extends UpdateSprite implements IVisionClient
     private var testR : Float = 100;
     private var testX : Float = 640;
     private var testY : Float = 800;
-    private var testDX : Float = 50;
-    private var testDY : Float = -50;
+    private var testDX : Float = 5;
+    private var testDY : Float = -5;
 
     private var oneshot : Bool = true;
 
@@ -133,7 +133,7 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		        visionTracker.track("UUID-"+ix+"-"+iy, fx, fy, r);
 	        }
 	        */
-	        oneshot = false;
+	        //oneshot = false;
 		}
 
 		testX += (testDX * (deltaTime / 1000));

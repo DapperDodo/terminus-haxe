@@ -20,7 +20,6 @@ class BitHelper implements IBitHelper
 		return ((byte >> bitIdx) & 1);
 	}
 
-	// untested!
 	public function getBitBool(byte : Int, bitIdx : Int) : Bool
 	{
 		return (((byte >> bitIdx) & 1) == 1);
