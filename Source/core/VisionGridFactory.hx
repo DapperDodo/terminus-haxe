@@ -22,11 +22,10 @@ class VisionGridFactory implements IVisionGridFactory
 				{
 					tx : x, 
 					ty : y, 
-					value : IVision.None, 
+					value : IVision.No, 
 					rect : new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize),
 					point : new Point(x*tilesize, y*tilesize),
-					seenShape : 0,
-					fullShape : 0
+					shape : 0,
 				};
 			}
 		}

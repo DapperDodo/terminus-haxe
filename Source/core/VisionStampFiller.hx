@@ -19,7 +19,7 @@ class VisionStampFiller implements IVisionStampFiller
 			// first find left and right edges
 			for(x in 0...gridSize)
 			{
-				if(stamp[x][y].value == IVision.Seen)
+				if(stamp[x][y].value == IVision.Yes)
 				{
 					if(!lFound) 
 					{
@@ -33,10 +33,10 @@ class VisionStampFiller implements IVisionStampFiller
 			// now fill her up!
 			for(x in l+1...r)
 			{
-				if(stamp[x][y].value == IVision.None)
+				if(stamp[x][y].value == IVision.No)
 				{
-					stamp[x][y].value = IVision.Seen;
-					stamp[x][y].seenShape = 511;
+					stamp[x][y].value = IVision.Yes;
+					stamp[x][y].shape = 511;
 				}
 			}
 		}

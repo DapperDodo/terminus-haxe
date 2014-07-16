@@ -45,9 +45,9 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 		this.fogTileProjector = fogTileProjector;
 
 		fogBitmaps = new Map<IVision, Bitmap>();
-		fogBitmaps.set(IVision.None, bitmapFactory.getInstance());
-		fogBitmaps.set(IVision.Seen, bitmapFactory.getInstance());
-		fogBitmaps.set(IVision.Full, bitmapFactory.getInstance());
+		fogBitmaps.set(IVision.No, bitmapFactory.getInstance());
+		fogBitmaps.set(IVision.Yes, bitmapFactory.getInstance());
+		//fogBitmaps.set(IVision.Full, bitmapFactory.getInstance());
 
 		dirtyTiles = new Array<IVisionTile>();
 	}
@@ -56,14 +56,14 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 	{
         assetLoader.register("visibility-none", "assets/maps/" + mapData.getID() + "/bg-1280x1600-invisible.jpg");
         assetLoader.register("visibility-seen", "assets/maps/" + mapData.getID() + "/bg-1280x1600-explored.jpg");
-        assetLoader.register("visibility-full", "assets/maps/" + mapData.getID() + "/bg-1280x1600.jpg");
+        //assetLoader.register("visibility-full", "assets/maps/" + mapData.getID() + "/bg-1280x1600.jpg");
 	}
 
 	override public function onPostLoad()
 	{
-		fogBitmaps.get(IVision.None).bitmapData = assetLoader.get("visibility-none");
-		fogBitmaps.get(IVision.Seen).bitmapData = assetLoader.get("visibility-seen");
-		fogBitmaps.get(IVision.Full).bitmapData = assetLoader.get("visibility-full");
+		fogBitmaps.get(IVision.No).bitmapData = assetLoader.get("visibility-none");
+		fogBitmaps.get(IVision.Yes).bitmapData = assetLoader.get("visibility-seen");
+		//fogBitmaps.get(IVision.Full).bitmapData = assetLoader.get("visibility-full");
 	}
 
 	override public function onStart()
@@ -79,20 +79,20 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 	/* needed for IVisionClient interface */
 	public function onVisionChange(tile : IVisionTile) : Void
 	{
-		if(tile.seenShape == 0)
+		if(tile.shape == 0)
 		{
 			// no vision
-			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.None).bitmapData);
+			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.No).bitmapData);
 		}
-		else if(tile.seenShape >= 511)
+		else if(tile.shape >= 511)
 		{
 			// seen
-			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Seen).bitmapData);
+			fogTileProjector.bake(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Yes).bitmapData);
 		}
 		else
 		{
 			// edge
-			fogTileProjector.bakeEdge(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Seen).bitmapData, fogBitmaps.get(IVision.None).bitmapData);
+			fogTileProjector.bakeEdge(tile, mapBackground.bitmap().bitmapData, fogBitmaps.get(IVision.Yes).bitmapData, fogBitmaps.get(IVision.No).bitmapData);
 		}
 		//dirtyTiles.push(tile);
 	}
@@ -134,6 +134,7 @@ class FogOfWar extends UpdateSprite implements IVisionClient
 	        }
 	        */
 	        //oneshot = false;
+			visionTracker.endFrame(); // all units have been tracked
 		}
 
 		testX += (testDX * (deltaTime / 1000));

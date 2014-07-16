@@ -11,6 +11,7 @@ class Vision implements IVisionServer implements IVisionTracker
 	private var visionGridFactory : IVisionGridFactory;
 	private var visionBroadcaster : IVisionBroadcaster;
 	private var visionUnitStore : IVisionUnitStore;
+	private var visionChangeDetector : IVisionChangeDetector;
 
 	// size of each Vision Tile in pixels
 	private var tilesize : Int;
@@ -35,13 +36,15 @@ class Vision implements IVisionServer implements IVisionTracker
 		visionStampFactory : IVisionStampFactory, 
 		visionGridFactory : IVisionGridFactory, 
 		visionBroadcaster : IVisionBroadcaster,
-		visionUnitStore : IVisionUnitStore
+		visionUnitStore : IVisionUnitStore,
+		visionChangeDetector : IVisionChangeDetector
 	)
 	{
 		this.visionStampFactory = visionStampFactory;
 		this.visionGridFactory = visionGridFactory;
 		this.visionBroadcaster = visionBroadcaster;
 		this.visionUnitStore = visionUnitStore;
+		this.visionChangeDetector = visionChangeDetector;
 	}
 
 
@@ -81,6 +84,19 @@ class Vision implements IVisionServer implements IVisionTracker
 		}
 	}
 
+	public function endFrame() : Void
+	{
+		visionChangeDetector.detectChanges();
+
+		//if temporary vision:
+		//  for all visible tiles:
+		//    visionChangeDetector.touch(tile);
+		//    set tile to invisible
+		//    visionChangeDetector.touch(tile);
+		//make sure track stamps every unit every frame
+	}
+
+
 	/////////////////////////////////////////////////////////////
 	// private parts
 	/////////////////////////////////////////////////////////////
@@ -102,9 +118,9 @@ class Vision implements IVisionServer implements IVisionTracker
 			{
 				if(inBounds(x, y))
 				{
-					if(stamp[rx][ry].seenShape > 0)
+					if(stamp[rx][ry].shape > 0)
 					{
-						setTile(x, y, stamp[rx][ry]);
+						stampTile(x, y, stamp[rx][ry]);
 					}
 				}
 				ry++;
@@ -114,35 +130,32 @@ class Vision implements IVisionServer implements IVisionTracker
 	}
 
 	/*
-		set a vision state to a tile
-		if the vision state has altered, broadcast the vision change
+		stamp a single tile
 	*/
-	private function setTile(tx : Int, ty : Int, stampTile : IVisionTile)
+	private function stampTile(tx : Int, ty : Int, stampTile : IVisionTile)
 	{
-		var dirty : Bool = false;
 		var gridTile = tiles[tx][ty];
+
+		// notify change-detector before stamping
+		visionChangeDetector.touch(gridTile);
 
 		//value 
 		if(gridTile.value != stampTile.value)
 		{
 			gridTile.value = stampTile.value;
-			dirty = true;
 		}
 
 		//shape
-		//if(gridTile.seenShape > 0) trace("tile: " + gridTile.seenShape + ", stamp: " + stampTile.seenShape + ", OR: " + (gridTile.seenShape | stampTile.seenShape));
-		if(gridTile.seenShape != (gridTile.seenShape | stampTile.seenShape))
+		//if(gridTile.shape > 0) trace("tile: " + gridTile.shape + ", stamp: " + stampTile.shape + ", OR: " + (gridTile.shape | stampTile.shape));
+		if(gridTile.shape != (gridTile.shape | stampTile.shape))
 		{
-			//if(gridTile.seenShape > 0) trace("shape changed! " + gridTile.seenShape + " is now " + (gridTile.seenShape | stampTile.seenShape));
-			gridTile.seenShape = (gridTile.seenShape | stampTile.seenShape);
-			if(gridTile.seenShape == 511 && gridTile.value == IVision.None) gridTile.value = IVision.Seen;
-			dirty = true;
+			//if(gridTile.shape > 0) trace("shape changed! " + gridTile.shape + " is now " + (gridTile.shape | stampTile.shape));
+			gridTile.shape = (gridTile.shape | stampTile.shape);
+			if(gridTile.shape == 511 && gridTile.value == IVision.No) gridTile.value = IVision.Yes;
 		}
 
-		if(dirty)
-		{
-			visionBroadcaster.visionChange(gridTile);
-		}
+		// notify change-detector after changes
+		visionChangeDetector.touch(gridTile);
 	}
 
 	/*

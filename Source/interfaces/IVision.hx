@@ -13,9 +13,8 @@ import openfl.geom.Point;
 */
 enum IVision
 {
-	None;
-	Seen;
-	Full;
+	No;
+	Yes;
 }
 
 /*
@@ -32,13 +31,12 @@ enum IVision
 */
 typedef IVisionTile =
 {
-	var tx : Int; 			// tile x index
-	var ty : Int; 			// tile y index
-	var value : IVision; 	// visibility mode
-	var rect  : Rectangle; 	// tile rectangle
-	var point : Point; 		// tile upper left corner coordinates
-	var seenShape  : IVisionTileShape ;	// tile shape (permanent vision)
-	var fullShape  : IVisionTileShape ;	// tile shape (current vision)
+	var tx : Int; 						// tile x index
+	var ty : Int; 						// tile y index
+	var value : IVision; 				// visibility mode
+	var rect  : Rectangle; 				// tile rectangle
+	var point : Point; 					// tile upper left corner coordinates
+	var shape : IVisionTileShape;		// tile shape
 }
 
 /*
@@ -77,7 +75,19 @@ interface IVisionClient
 */
 interface IVisionBroadcaster
 {
+	/*
+		mark individual tiles as changed (vision status or shape has changed)
+		this object should put these in a queue for later broadcasting to the clients
+	*/
 	public function visionChange(tile : IVisionTile) : Void;
+
+	/*
+		broadcast all changed tiles to the clients
+		this empties (flushes) the 'changed tile queue'
+		let our client objects know one or more tiles have changed in the players vision
+		for example, a 'fog of war' object may want to paint fog where the player can't see
+	*/
+	public function broadcast() : Void;
 }
 
 /*
@@ -104,7 +114,59 @@ interface IVisionServer
 */
 interface IVisionTracker
 {
+	/*
+		send individual unit updates to the vision system
+		do this often (every update loop)
+	*/
 	public function track(unitId : String, x : Float, y : Float, radius : Float) : Void;
+
+	/*
+		indicate you have tracked all units for this frame (update loop)
+	*/
+	public function endFrame() : Void;
+}
+
+/*
+	interface
+
+	change detector
+
+	objects of this type are responsible for detecting (within a frame / update loop)
+	which tiles have changed
+*/
+interface IVisionChangeDetector
+{
+	/*
+		call this function to indicate a tile might be changed
+		it is possible that the same tile is touched multiple times
+		and the sum of these touches results in an unchanged tile.
+		this object must handle such cases.
+		the first touch of a tile is the baseline on which changes are detected
+		the change should be detected between the first (baseline) touch and the last one
+
+		touch 1: Yes, shape 234
+		=> no change!
+
+		examples:
+		touch 1: Yes, shape 234
+		touch 2: No, shape 0
+		=> change!
+
+		touch 1: Yes, shape 234
+		touch 2: No, shape 0
+		touch 1: Yes, shape 234
+		=> no change!
+	*/
+	public function touch(gridTile : IVisionTile) : Void;
+
+	/*
+		after al tile touches have been registered, call this function to detect changed tiles
+		from the situation before the touches to the situation after the touches.
+		reset for the next detection frame (update loop)
+
+		pass the changed tiles to the IVisionBroadcaster object
+	*/
+	public function detectChanges() : Void;
 }
 
 /*

@@ -5,10 +5,12 @@ import interfaces.IVision;
 class VisionRegistryCaster implements IVisionRegistry implements IVisionBroadcaster
 {
 	private var R : Array<IVisionClient>;
+	private var TileQueue : Array<IVisionTile>;
 
 	public function new()
 	{
 		R = new Array<IVisionClient>();
+		TileQueue = new Array<IVisionTile>();
 	}
 
 	// implement IVisionRegistry
@@ -37,15 +39,25 @@ class VisionRegistryCaster implements IVisionRegistry implements IVisionBroadcas
 
 	// implement IVisionBroadcaster
 
-	/*
-		let our client objects know something has changed in the players vision
-		for example, a 'fog of war' object may want to paint fog where the player can't see
-	*/
 	public function visionChange(tile : IVisionTile)
 	{
-		for(idx in 0...R.length)
+		if(TileQueue.indexOf(tile) == -1)
 		{
-			R[idx].onVisionChange(tile);
+			TileQueue.push(tile);
+		}
+	}
+
+	public function broadcast() : Void
+	{
+		//if(TileQueue.length > 0) trace("broadcasting " + TileQueue.length + " changed tiles");
+
+		while(TileQueue.length > 0)
+		{
+			var tile : IVisionTile = TileQueue.pop();
+			for(idx in 0...R.length)
+			{
+				R[idx].onVisionChange(tile);
+			}
 		}
 	}
 }

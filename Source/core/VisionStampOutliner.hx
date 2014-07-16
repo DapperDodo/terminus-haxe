@@ -67,7 +67,7 @@ class VisionStampOutliner implements IVisionStampOutliner
 
 	private function octant(radiusGrid : IVisionGrid, x : Int, y : Int, straightPrev : Bool, straightNext : Bool, octant : Int)
 	{
-		radiusGrid[x][y].value = IVision.Seen;
-		radiusGrid[x][y].seenShape = visionEdgeShaper.getShape(straightPrev, straightNext, octant);
+		radiusGrid[x][y].value = IVision.Yes;
+		radiusGrid[x][y].shape = visionEdgeShaper.getShape(straightPrev, straightNext, octant);
 	}
 }

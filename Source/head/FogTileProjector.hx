@@ -24,7 +24,7 @@ class FogTileProjector implements IFogTileProjector
 	public function bakeEdge(tile : IVisionTile, dest : BitmapData, base : BitmapData, layer : BitmapData) : Void
 	{
 		// get a mask for this tile's shape
-		var mask : BitmapData = fogMaskFactory.instance(tile.seenShape);
+		var mask : BitmapData = fogMaskFactory.instance(tile.shape);
 
 		// and apply it
 		// TODO: optimize the fuck out of this

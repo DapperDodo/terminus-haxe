@@ -15,6 +15,7 @@ import interfaces.IBit;
 import core.BitHelper;
 
 import interfaces.IVision;
+import core.VisionChangeDetector;
 import core.VisionRegistryCaster;
 import core.VisionStampFactory;
 import core.VisionGridFactory;
@@ -65,16 +66,21 @@ class Main extends UpdateSprite
         var visionStampOutliner : IVisionStampOutliner = new VisionStampOutliner(visionEdgeShaper);
         var visionStampFiller : IVisionStampFiller = new VisionStampFiller();
         var visionStampFactory : IVisionStampFactory = new VisionStampFactory(visionGridFactory, visionStampOutliner, visionStampFiller);
+
 		// subsystem Vision (player 1) TODO: add objects for player 2
+        var visionUnitStore : IVisionUnitStore = new VisionUnitStore();
 		var visionRegistry : IVisionRegistry = new VisionRegistryCaster();
 		var visionBroadcaster : IVisionBroadcaster = cast(visionRegistry, IVisionBroadcaster); //implements registry and broadcast interfaces
-        var visionUnitStore : IVisionUnitStore = new VisionUnitStore();
-        var visionServer : IVisionServer = new Vision(visionStampFactory, visionGridFactory, visionBroadcaster, visionUnitStore);
+		var visionChangeDetector : IVisionChangeDetector = new VisionChangeDetector(visionBroadcaster);
+        var visionServer : IVisionServer = new Vision(visionStampFactory, visionGridFactory, visionBroadcaster, visionUnitStore, visionChangeDetector);
         var visionTracker : IVisionTracker = cast(visionServer, IVisionTracker); //implements server and tracker interfaces
 
 		// load map data
 		mapData.load("hello_world");
 		visionServer.init(fogOfWarGranularity, mapData.getWidth(), mapData.getHeight() / 2);
+
+		// resources
+		
 
 		///////////////////////////////////////////////////
 		// HEAD objects

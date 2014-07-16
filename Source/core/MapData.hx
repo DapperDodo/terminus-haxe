@@ -1,5 +1,7 @@
 package core;
 
+import interfaces.IMapDefinition;
+
 class MapData
 {
 	// object that loads data for a map from an external source
@@ -35,5 +37,10 @@ class MapData
 	public function getWidth() : Float
 	{
 		return mapDefinition.w;
+	}
+
+	public function getResources() : Array<Resource>
+	{
+		return mapDefinition.resources;
 	}
 }
